@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSGO 模拟器 v1.7</title>
+    <title>CSGO 模拟器 v1.8</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -193,7 +193,7 @@
                 <div><div style="font-size:0.8rem; color:#6b7280;">总击杀</div><div id="stat-k" style="font-weight:bold;">0</div></div>
                 <div><div style="font-size:0.8rem; color:#6b7280;">总奖金</div><div id="stat-money" style="font-weight:bold;">0</div></div>
                 <div><div style="font-size:0.8rem; color:#6b7280;">S级冠军</div><div id="stat-s-wins" style="font-weight:bold;">0</div></div>
-                <div><div style="font-size:0.8rem; color:#6b7280;">Major最好</div><div id="stat-major-best" style="font-weight:bold;">-</div></div>
+                <div><div style="font-size:0.8rem; color:#6b7280;">Major冠军</div><div id="stat-major-wins" style="font-weight:bold;">0</div></div>
             </div>
             <div id="history-list" class="scroll-y" style="flex: 1;">
                 <div class="history-item history-header">
@@ -291,98 +291,60 @@
             { id: 'cheat', name: '小金手指', cost: 0, type: 'cheat', desc: '能力值+1 (每月限1次)', icon: 'fa-hand-point-up' }
         ];
 
+        // 增强后的随机事件库，包含付费选项
         const RANDOM_EVENTS = [
             { text: "通宵练枪，手感火热但精神萎靡", effect: (l) => { l.modStat('aim', 1, '通宵练枪'); l.modStat('san', -2, '睡眠不足'); } },
             { text: "外卖吃到异物，心态大崩", effect: (l) => { l.modStat('san', -3, '外卖事故'); } },
-            { text: "排位遇到挂壁，被疯狂嘲讽", effect: (l) => { l.modStat('san', -2, '遇到挂壁'); } },
-            { text: "鼠标微动坏了，不得不换新", effect: (l) => { l.modStat('money', -1, '换鼠标'); } },
             { text: "粉丝在推特上夸你操作细", effect: (l) => { l.modStat('san', 2, '粉丝鼓励'); } },
-            { text: "教练请全队吃海底捞", effect: (l) => { l.modStat('coach', 2, '教练请客'); l.modStat('san', 1, '聚餐'); } },
             { text: "训练赛因为队友迟到取消", effect: (l) => { l.modStat('coach', -1, '纪律涣散'); l.modStat('san', -1, '白等一场'); } },
-            { text: "意外发现一个新的烟雾弹点位", effect: (l) => { l.modStat('tactics', 1, '新道具'); } },
             { text: "直播收到大额打赏", effect: (l) => { l.modStat('money', 2, '直播打赏'); } },
-            { text: "电脑显卡突然烧了", effect: (l) => { l.modStat('money', -3, '显卡报废'); l.modStat('san', -2, '破财'); } },
             { text: "打出 1v5 惊天残局，视频火了", effect: (l) => { l.modStat('san', 3, '高光时刻'); l.modStat('aim', 1, '自信提升'); } },
-            { text: "被黑粉私信辱骂", effect: (l) => { l.modStat('san', -2, '网络暴力'); } },
-            { text: "和队友关于战术发生争执", effect: (l) => { l.modStat('coach', -1, '队内矛盾'); } },
-            { text: "参加线下活动见到偶像", effect: (l) => { l.modStat('san', 3, '追星成功'); } },
-            { text: "感冒发烧，状态下滑", effect: (l) => { l.modStat('aim', -1, '生病'); l.modStat('san', -1, '生病'); } },
-            { text: "女朋友/男朋友 提出分手", effect: (l) => { l.modStat('san', -5, '分手'); } },
-            { text: "谈了新的恋爱，心情大好", effect: (l) => { l.modStat('san', 4, '恋爱'); l.modStat('tactics', -1, '分心'); } },
-            { text: "被俱乐部拖欠工资", effect: (l) => { l.modStat('money', -1, '欠薪'); l.modStat('san', -2, '讨薪'); } },
-            { text: "接受媒体专访，知名度提升", effect: (l) => { l.modStat('coach', 1, '媒体曝光'); } },
-            { text: "熬夜看 Major 决赛", effect: (l) => { l.modStat('tactics', 1, '观赛学习'); l.modStat('san', 1, '热血沸腾'); } },
-            { text: "因为睡过头错过了训练", effect: (l) => { l.modStat('coach', -2, '迟到'); } },
-            { text: "买彩票中奖了", effect: (l) => { l.modStat('money', 5, '中奖'); l.modStat('san', 3, '天降横财'); } },
-            { text: "键盘进了可乐", effect: (l) => { l.modStat('money', -1, '洗键盘'); } },
-            { text: "被拉去打陪玩赚钱", effect: (l) => { l.modStat('money', 3, '陪玩收入'); l.modStat('san', -2, '老板难伺候'); } },
-            { text: "由于版本更新，擅长的枪被削弱", effect: (l) => { l.modStat('aim', -1, '版本受害者'); } },
-            { text: "苦练投掷物", effect: (l) => { l.modStat('tactics', 1, '跑图'); } },
-            { text: "教练单独给你开小灶", effect: (l) => { l.modStat('aim', 1, '特训'); l.modStat('coach', 2, '器重'); } },
-            { text: "被队友指出枪法太马", effect: (l) => { l.modStat('san', -1, '压力'); } },
-            { text: "排位连跪十把", effect: (l) => { l.modStat('san', -4, '红页战士'); } },
-            { text: "在死斗服练了一整天", effect: (l) => { l.modStat('aim', 1, '死斗'); } },
-            { text: "分析 Demo 发现对手习惯", effect: (l) => { l.modStat('tactics', 1, '深度分析'); } },
-            { text: "被邀请去当解说嘉宾", effect: (l) => { l.modStat('money', 1, '通告费'); } },
-            { text: "因为坐姿问题腰疼", effect: (l) => { l.modStat('san', -1, '职业病'); } },
-            { text: "换了更舒服的人体工学设置", effect: (l) => { l.modStat('aim', 1, '外设调整'); } },
-            { text: "队友过生日，送了礼物", effect: (l) => { l.modStat('money', -1, '送礼'); l.modStat('coach', 1, '队内氛围'); } },
-            { text: "训练基地停电一天", effect: (l) => { l.modStat('san', 1, '强制休息'); } },
-            { text: "因为压力大失眠", effect: (l) => { l.modStat('san', -2, '失眠'); } },
-            { text: "喝到了非常好喝的奶茶", effect: (l) => { l.modStat('san', 1, '糖分摄入'); } },
-            { text: "被路人认出来并合影", effect: (l) => { l.modStat('san', 2, '小有名气'); } },
-            { text: "Steam 账号被盗（找回成功但虚惊一场）", effect: (l) => { l.modStat('san', -3, '账号惊魂'); } },
-            { text: "参加战队团建 CS 实人版", effect: (l) => { l.modStat('coach', 1, '团建'); l.modStat('tactics', 1, '实地演练'); } },
-            { text: "被论坛老哥做成表情包", effect: (l) => { l.modStat('san', -1, '社死'); } },
-            { text: "由于长期耳机佩戴导致耳朵发炎", effect: (l) => { l.modStat('san', -2, '中耳炎'); } },
-            { text: "在鱼塘局炸鱼找回自信", effect: (l) => { l.modStat('san', 2, '炸鱼'); } },
-            { text: "和朋友出去通宵唱 K", effect: (l) => { l.modStat('san', 3, '放松'); l.modStat('aim', -1, '手生'); } },
-            { text: "看了激励人心的电竞电影", effect: (l) => { l.modStat('san', 2, '打鸡血'); } },
-            { text: "尝试新的准星设置", effect: (l) => { l.modStat('aim', 1, '玄学'); } },
-            { text: "被教练批评态度不端正", effect: (l) => { l.modStat('coach', -2, '挨骂'); } },
-            { text: "赞助商发了最新款外设", effect: (l) => { l.modStat('san', 2, '白嫖'); } },
-            { text: "在 Faceit 遇到了 s1mple 并被暴打", effect: (l) => { l.modStat('tactics', 1, '学习身法'); l.modStat('san', -1, '被虐'); } }
+            { text: "电脑显卡突然烧了", effect: (l) => { l.modStat('money', -3, '显卡报废'); l.modStat('san', -2, '破财'); } },
+            // 付费事件
+            { text: "队友心情不好，是否请他吃顿大餐？", type: 'choice', choices: [
+                { text: '请客 (金币-2, 教练+2, 心态+2)', cb: (l) => { 
+                    if(l.checkMoney(2)) { l.modStat('money', -2, '请客'); l.modStat('coach', 2, '队内关系'); l.modStat('san', 2, '助人为乐'); } 
+                }},
+                { text: '下次一定 (无事发生)', cb: (l) => {} }
+            ]},
+            { text: "知名分析师开设了付费讲座，是否参加？", type: 'choice', choices: [
+                { text: '报名 (金币-3, 战术+2)', cb: (l) => { 
+                    if(l.checkMoney(3)) { l.modStat('money', -3, '学费'); l.modStat('tactics', 2, '名师指导'); } 
+                }},
+                { text: '太贵了 (无事发生)', cb: (l) => {} }
+            ]},
+            { text: "FPS 训练软件推出了高级会员，是否订阅？", type: 'choice', choices: [
+                { text: '订阅 (金币-2, 枪法+1)', cb: (l) => { 
+                    if(l.checkMoney(2)) { l.modStat('money', -2, '软件订阅'); l.modStat('aim', 1, '科学训练'); } 
+                }},
+                { text: '用免费版 (无事发生)', cb: (l) => {} }
+            ]}
         ];
 
+        // 比赛决策影响大幅提升
         const MATCH_SCENARIOS = [
             {
                 title: "决胜局残局",
                 desc: "比分 15:14，你剩下 1v1 残局，C4 已安放。你知道对手在 VIP。",
                 options: [
-                    { text: "主动拉出去对枪 (拼枪法)", mod: { self: 2, team: 0, opp: 1 }, result: "你选择了相信自己的枪法！" },
-                    { text: "躲在死点拖时间 (拼智商)", mod: { self: 0, team: 1, opp: 0 }, result: "你选择了稳健的打法。" }
+                    { text: "主动拉出去对枪 (拼枪法)", mod: { self: 5, team: 0, opp: 2 }, result: "你选择了相信自己的枪法！" },
+                    { text: "躲在死点拖时间 (拼智商)", mod: { self: -2, team: 3, opp: -2 }, result: "你选择了稳健的打法。" }
                 ]
             },
             {
                 title: "经济局指挥",
                 desc: "全队只有 $2000，作为关键先生，队友在等你的信号。",
                 options: [
-                    { text: "全队 Rush B (赌博)", mod: { self: 1, team: 1, opp: 2 }, result: "富贵险中求！" },
-                    { text: "纯 Eco 攒钱 (稳健)", mod: { self: 0, team: 0, opp: -1 }, result: "留得青山在。" }
+                    { text: "全队 Rush B (赌博)", mod: { self: 2, team: 3, opp: 4 }, result: "富贵险中求！" },
+                    { text: "纯 Eco 攒钱 (稳健)", mod: { self: 0, team: 1, opp: -3 }, result: "留得青山在。" }
                 ]
             },
             {
                 title: "暂停时刻",
                 desc: "队伍连丢 5 分，教练叫了暂停，气氛凝重。",
                 options: [
-                    { text: "大声激励队友 (提振士气)", mod: { self: 0, team: 2, opp: 0 }, result: "Nice! Let's go!" },
-                    { text: "分析对手站位 (战术调整)", mod: { self: 0, team: 1, opp: -1 }, result: "大家冷静分析了一波。" }
-                ]
-            },
-            {
-                title: "对手嘲讽",
-                desc: "对面在公屏打字鞭尸嘲讽你。",
-                options: [
-                    { text: "打字回喷 (心态波动)", mod: { self: -1, team: 0, opp: 0 }, result: "你上头了。" },
-                    { text: "屏蔽公屏，专注比赛 (屏蔽)", mod: { self: 1, team: 0, opp: 0 }, result: "心中无女人，拔刀自然神。" }
-                ]
-            },
-            {
-                title: "捡到 AWP",
-                desc: "保枪回合，你捡到了对手的大狙，但你平时是步枪手。",
-                options: [
-                    { text: "自己用 (尝试双修)", mod: { self: 1, team: 0, opp: 0 }, result: "这把狙归我了。" },
-                    { text: "发给队内狙击手 (团队)", mod: { self: 0, team: 2, opp: 0 }, result: "好兄弟，接狙！" }
+                    { text: "大声激励队友 (提振士气)", mod: { self: 1, team: 5, opp: 0 }, result: "Nice! Let's go!" },
+                    { text: "分析对手站位 (战术调整)", mod: { self: 2, team: 2, opp: -2 }, result: "大家冷静分析了一波。" }
                 ]
             }
         ];
@@ -404,6 +366,7 @@
                 demoCount: 0,
                 aimUnlockLevel: 0,
                 sWins: 0, cWins: 0, bWins: 0, aWins: 0,
+                majorWins: 0, // 新增 Major 冠军统计
                 majorBest: 0,
                 careerKills: 0,
                 totalMoney: 0,
@@ -444,6 +407,12 @@
                 const dateStr = `Y${state.date.year}/M${state.date.month}`;
                 state.logs.unshift({ date: dateStr, msg, type });
                 ui.renderLogs();
+            },
+
+            checkMoney: (cost) => {
+                if (state.stats.money >= cost) return true;
+                logic.log('资金不足，无法进行此操作', 'neg');
+                return false;
             },
 
             modStat: (key, val, reason) => {
@@ -562,13 +531,18 @@
                 }
 
                 const m = state.date.month;
+                
+                // 月度事件触发顺序
                 if (m === 6 || m === 12) logic.triggerMajor();
                 if (m === 12) logic.triggerTop20();
+                
+                // 7月特训
+                if (m === 7) logic.triggerJulyTraining();
+
                 if (m === 2) {
                     ui.showModal('Steam 春节特惠', 'G胖带着绿色的折扣图标来了！', [
                         { text: '买买买! (金币-1, SAN+3)', class: 'btn-primary', cb: () => { 
-                            if(state.stats.money >=1) { logic.modStat('money', -1, 'Steam特惠'); logic.modStat('san', 3, '买到了游戏'); }
-                            else logic.log('钱不够，只能看着流泪。');
+                            if(logic.checkMoney(1)) { logic.modStat('money', -1, 'Steam特惠'); logic.modStat('san', 3, '买到了游戏'); }
                             ui.closeModal();
                         }},
                         { text: '忍住不买 (无事发生)', class: 'btn-outline', cb: () => ui.closeModal() }
@@ -577,12 +551,21 @@
                 if (m === 5) logic.modStat('san', 2, '劳动节假期');
                 if (m === 11) logic.modStat('san', 3, '休赛期度假');
 
-                if (m !== 6 && m !== 12) {
+                if (m !== 6 && m !== 12 && m !== 7 && m !== 2) {
                     logic.triggerRandomEvent();
                 }
 
                 logic.checkCareerProgress();
                 ui.render();
+            },
+
+            triggerJulyTraining: () => {
+                ui.showModal('夏季特训营', '休赛期到了，你决定针对性提升哪项能力？', [
+                    { text: '魔鬼练枪 (枪法+1)', class: 'btn-danger', cb: () => { logic.modStat('aim', 1, '夏季特训'); ui.closeModal(); } },
+                    { text: '战术研讨 (战术+1)', class: 'btn-primary', cb: () => { logic.modStat('tactics', 1, '夏季特训'); ui.closeModal(); } },
+                    { text: '团队建设 (教练+1)', class: 'btn-warning', cb: () => { logic.modStat('coach', 1, '夏季特训'); ui.closeModal(); } },
+                    { text: '彻底休息 (心态+3)', class: 'btn-success', cb: () => { logic.modStat('san', 3, '放假'); ui.closeModal(); } }
+                ]);
             },
 
             triggerMatchEvent: (slotId) => {
@@ -613,6 +596,7 @@
                 logic.finalizeMatch(slot, mods);
             },
 
+            // 修复：加入备战积分的影响
             finalizeMatch: (slot, mods = {self:0, team:0, opp:0}) => {
                 const { level, scores } = slot;
                 const thresholds = {
@@ -623,25 +607,30 @@
                 };
                 const th = thresholds[level];
                 const finalScores = slot.savedScores; 
+
+                // 核心修复：备战分数（savedScores）现在直接加入判定公式
+                // 备战分通常在 0-20 之间，取平均值加入
+                const prepBonus = Math.round((finalScores.tac + finalScores.trn + finalScores.real) / 3);
                 
-                const selfBase = state.stats.aim + (state.stats.tactics * 0.5) + (state.stats.san * 0.2) + (mods.self || 0);
-                const selfRand = Math.floor(Math.random() * 7) - 3;
+                const selfBase = state.stats.aim + (state.stats.tactics * 0.5) + (state.stats.san * 0.2) + (prepBonus * 0.5) + (mods.self || 0);
+                const selfRand = Math.floor(Math.random() * 5) - 2; // 减少纯随机波动
                 const selfTotal = selfBase + selfRand;
                 const selfRes = selfTotal >= th.self ? 1 : (selfTotal >= th.self - 5 ? 0 : -1);
                 
-                const teamBase = state.stats.coach + state.stats.tactics + (mods.team || 0);
-                const teamRand = Math.floor(Math.random() * 7) - 3;
+                const teamBase = state.stats.coach + state.stats.tactics + (prepBonus * 0.5) + (mods.team || 0);
+                const teamRand = Math.floor(Math.random() * 5) - 2;
                 const teamTotal = teamBase + teamRand;
                 const teamRes = teamTotal >= th.team ? 1 : (teamTotal >= th.team - 5 ? 0 : -1);
 
                 const oppDiff = th.opp * 1.5; 
-                const oppPerf = (state.stats.tactics * 1.2) + (Math.floor(Math.random() * 7) - 3) + (mods.opp || 0);
+                const oppPerf = (state.stats.tactics * 1.0) + (prepBonus * 0.3) + (Math.floor(Math.random() * 5) - 2) + (mods.opp || 0);
                 const oppRes = oppPerf >= oppDiff ? 1 : (oppPerf >= oppDiff - 5 ? 0 : -1);
 
                 const totalRes = selfRes + teamRes + oppRes;
 
                 let resultType = '', title = '', points = 0, money = 0;
                 
+                // 优化判定标准
                 if (totalRes < -1) { resultType = 'out'; title = '小组出局'; points = 0; money = 0; }
                 else if (totalRes === -1) { resultType = 'top16'; title = '成功晋级(16强)'; points = 1; money = 1; }
                 else if (totalRes === 0) { resultType = 'top8'; title = '止步八强'; points = 2; money = 2; }
@@ -700,7 +689,8 @@
                 const detailHtml = `
                     <div style="background:#f9fafb; padding:10px; border-radius:6px; margin-bottom:10px;">
                         <p><strong>最终战果: ${title}</strong></p>
-                        <p style="font-size:0.9rem; color:#6b7280;">表现分: ${totalRes} (自${selfRes}/队${teamRes}/敌${oppRes})</p>
+                        <p style="font-size:0.9rem; color:#6b7280;">表现: ${totalRes} | 备战分加成: +${Math.round(prepBonus * 0.5)}</p>
+                        <p style="font-size:0.8rem; color:#9ca3af;">(自${selfRes}/队${teamRes}/敌${oppRes})</p>
                     </div>
                     <p>奖励: 积分+${points}, 奖金+${Math.floor(money)}, 击杀+${kills}</p>
                     ${rewardsLog.length ? `<p style="color:#059669; font-size:0.9rem;">${rewardsLog.join(', ')}</p>` : ''}
@@ -730,7 +720,10 @@
                 else if (finalScore < 80) { rank = '八强'; rewardMoney=10; rewardPoints=4; rewardK=150; rewardCoach=2; }
                 else if (finalScore < 95) { rank = '四强'; rewardMoney=20; rewardPoints=6; rewardK=200; rewardCoach=3; }
                 else if (finalScore < 110) { rank = '亚军'; rewardMoney=40; rewardPoints=8; rewardK=300; rewardCoach=4; }
-                else { rank = '冠军'; rewardMoney=100; rewardPoints=10; rewardK=500; rewardCoach=5; state.flags.majorBest = 8; }
+                else { 
+                    rank = '冠军'; rewardMoney=100; rewardPoints=10; rewardK=500; rewardCoach=5; state.flags.majorBest = 8; 
+                    state.flags.majorWins++; // 增加 Major 冠军统计
+                }
 
                 if(rewardPoints > 0) state.flags.totalScore += rewardPoints;
                 if(rewardMoney > 0) logic.modStat('money', rewardMoney, 'Major奖金');
@@ -863,10 +856,20 @@
 
             triggerRandomEvent: () => {
                 const evt = RANDOM_EVENTS[Math.floor(Math.random() * RANDOM_EVENTS.length)];
-                ui.showModal('月度事件', evt.text, [{text:'确定', class:'btn-primary', cb:()=>{
-                    evt.effect(logic); 
-                    ui.closeModal();
-                }}]);
+                
+                if (evt.type === 'choice') {
+                    const btns = evt.choices.map(c => ({
+                        text: c.text,
+                        class: 'btn-outline',
+                        cb: () => { c.cb(logic); ui.closeModal(); }
+                    }));
+                    ui.showModal('随机抉择', evt.text, btns);
+                } else {
+                    ui.showModal('月度事件', evt.text, [{text:'确定', class:'btn-primary', cb:()=>{
+                        evt.effect(logic); 
+                        ui.closeModal();
+                    }}]);
+                }
             },
 
             ascendToPro: () => {
@@ -928,7 +931,6 @@
                 if (item.type === 'cheat') {
                     if (state.flags.boughtCheatThisMonth) { logic.log('小金手指每月只能用一次'); return; }
                     state.flags.boughtCheatThisMonth = true;
-                    // Cheat modal
                     ui.showModal('小金手指', '选择一个属性提升:', [
                         { text:'枪法+1', cb:()=>{logic.modStat('aim',1,'金手指'); ui.closeModal();} },
                         { text:'战术+1', cb:()=>{logic.modStat('tactics',1,'金手指'); ui.closeModal();} },
@@ -983,6 +985,10 @@
                 logic.modStat('san', -3, '训练赛');
                 let times = 1 + (logic.hasBuff('server_buy')?1:0) + (logic.hasBuff('server_rent')?1:0);
                 if(logic.hasBuff('server_rent')) logic.consumeBuff('train_count');
+                
+                if (times > 1) {
+                    logic.log(`服务器加持：进行了 ${times} 倍强度的训练！`, 'pos');
+                }
 
                 for(let i=0; i<times; i++) {
                     state.slots.forEach(slot => {
@@ -1036,6 +1042,10 @@
         };
 
         const ui = {
+            // 弹窗队列系统
+            modalQueue: [],
+            isModalOpen: false,
+
             init: () => {
                 // 生成角色选择卡片HTML
                 const rolesHtml = ROLES.map(r => `
@@ -1102,7 +1112,7 @@
                 document.getElementById('stat-k').textContent = state.flags.careerKills;
                 document.getElementById('stat-money').textContent = state.flags.totalMoney;
                 document.getElementById('stat-s-wins').textContent = state.flags.sWins;
-                document.getElementById('stat-major-best').textContent = state.flags.majorBest > 0 ? (state.flags.majorBest===8 ? '冠军' : '有') : '-';
+                document.getElementById('stat-major-wins').textContent = state.flags.majorWins;
 
                 const histHtml = state.history.slice().reverse().map(h => {
                     let resClass = 'res-out';
@@ -1209,6 +1219,12 @@
             },
 
             showModal: (title, html, buttons) => {
+                if (ui.isModalOpen) {
+                    ui.modalQueue.push({ title, html, buttons });
+                    return;
+                }
+
+                ui.isModalOpen = true;
                 const overlay = document.getElementById('modal-overlay');
                 overlay.querySelector('.modal-title').textContent = title;
                 overlay.querySelector('.modal-body').innerHTML = html;
@@ -1225,7 +1241,16 @@
             },
 
             closeModal: () => {
-                document.getElementById('modal-overlay').style.display = 'none';
+                const overlay = document.getElementById('modal-overlay');
+                overlay.style.display = 'none';
+                ui.isModalOpen = false;
+
+                if (ui.modalQueue.length > 0) {
+                    const next = ui.modalQueue.shift();
+                    setTimeout(() => {
+                        ui.showModal(next.title, next.html, next.buttons);
+                    }, 200); // 短暂延迟，让用户意识到切换了
+                }
             },
             
             showAscensionModal: () => {
@@ -1274,16 +1299,16 @@
                             <div class="honor-label">S级冠军</div>
                         </div>
                         <div class="honor-card">
+                            <div class="honor-val">${state.flags.majorWins}</div>
+                            <div class="honor-label">Major冠军</div>
+                        </div>
+                        <div class="honor-card">
                             <div class="honor-val">${state.flags.aWins}</div>
                             <div class="honor-label">A级冠军</div>
                         </div>
                         <div class="honor-card">
                             <div class="honor-val">${state.flags.bWins}</div>
                             <div class="honor-label">B级冠军</div>
-                        </div>
-                        <div class="honor-card">
-                            <div class="honor-val">${state.flags.cWins}</div>
-                            <div class="honor-label">C级冠军</div>
                         </div>
                     </div>
                     <p style="font-weight:bold; margin-top:15px;">HLTV Top 20 历史</p>
