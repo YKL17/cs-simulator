@@ -1,0 +1,1309 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSGO 模拟器 v1.0</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f3f4f6;
+            --panel-bg: #ffffff;
+            --text: #1f2937;
+            --border: #e5e7eb;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+
+        /* 通用样式 */
+        .btn { cursor: pointer; border: none; border-radius: 6px; padding: 8px 16px; font-weight: 600; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; }
+        .btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.1); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .btn:active:not(:disabled) { transform: translateY(0); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+        
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--secondary); color: white; }
+        .btn-warning { background: var(--accent); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-outline:hover { background: #f9fafb; }
+
+        .scroll-y { overflow-y: auto; scrollbar-width: thin; }
+        .scroll-y::-webkit-scrollbar { width: 6px; }
+        .scroll-y::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 3px; }
+
+        /* 模态弹窗 */
+        #modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
+        .modal { background: white; width: 500px; max-width: 90%; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; overflow: hidden; max-height: 90vh; }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+        .modal-title { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+        .modal-body { padding: 24px; overflow-y: auto; line-height: 1.6; font-size: 0.95rem; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: #f8fafc; }
+
+        /* 游戏界面布局 */
+        #game-container { width: 1400px; height: 90vh; display: grid; grid-template-columns: 300px 1fr 350px; grid-template-rows: 60px 1fr 200px; gap: 16px; display: none; }
+        
+        .panel { background: var(--panel-bg); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .panel-header { padding: 10px 16px; background: #f3f4f6; border-bottom: 1px solid var(--border); font-weight: bold; font-size: 0.9rem; color: #4b5563; display: flex; justify-content: space-between; align-items: center; }
+
+        /* 区域定义 */
+        .area-info { grid-column: 1 / 4; grid-row: 1; display: flex; align-items: center; padding: 0 24px; justify-content: space-between; background: linear-gradient(to right, #ffffff, #f0f9ff); border-bottom: 2px solid var(--primary); }
+        .area-stats { grid-column: 1; grid-row: 2; }
+        .area-results { grid-column: 2; grid-row: 2; }
+        .area-workstation { grid-column: 3; grid-row: 2 / 4; }
+        .area-logs { grid-column: 1; grid-row: 3; }
+        .area-actions { grid-column: 2; grid-row: 3; }
+
+        /* 属性条 */
+        .stat-row { padding: 12px 16px; border-bottom: 1px solid #f3f4f6; }
+        .stat-label { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.85rem; font-weight: 600; }
+        .progress-bar { height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; transition: width 0.5s ease; }
+        .stat-san .progress-fill { background: var(--secondary); }
+        .stat-aim .progress-fill { background: var(--danger); }
+        .stat-tac .progress-fill { background: var(--primary); }
+        .stat-coach .progress-fill { background: var(--accent); }
+        .money-display { font-size: 1.1rem; color: var(--accent); font-weight: bold; display: flex; align-items: center; gap: 8px; }
+
+        /* 日志 */
+        #log-list { padding: 10px; font-family: 'Consolas', monospace; font-size: 0.85rem; }
+        .log-item { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px dashed #eee; display: flex; gap: 8px; }
+        .log-date { color: #9ca3af; min-width: 60px; }
+        .log-content { flex: 1; }
+        .log-change { color: #059669; font-weight: bold; }
+        .log-neg { color: #dc2626; }
+
+        /* 操作按钮网格 */
+        .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 16px; height: 100%; }
+        .action-btn { flex-direction: column; justify-content: center; height: 100%; font-size: 0.95rem; gap: 8px; }
+        .action-btn i { font-size: 1.5rem; margin-bottom: 4px; }
+
+        /* 赛事工作站 */
+        .slot-card { margin: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: #fff; position: relative; transition: all 0.3s; }
+        .slot-card.active { border-color: var(--primary); box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1); }
+        .slot-header { font-weight: bold; margin-bottom: 8px; color: var(--text); display: flex; justify-content: space-between; }
+        .slot-scores { display: flex; gap: 8px; font-size: 0.8rem; margin: 8px 0; }
+        .score-badge { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
+        .slot-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 8px; }
+        .slot-locked { opacity: 0.7; pointer-events: none; background: #f9fafb; }
+
+        /* 开始界面 */
+        #start-screen { width: 900px; background: white; border-radius: 16px; padding: 40px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+        .role-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 30px; }
+        .role-card { border: 2px solid var(--border); border-radius: 10px; padding: 20px; cursor: pointer; transition: all 0.2s; position: relative; }
+        .role-card:hover { border-color: var(--primary); transform: translateY(-5px); }
+        .role-card.selected { border-color: var(--primary); background: #eff6ff; box-shadow: 0 0 0 2px var(--primary); }
+        .role-icon { font-size: 2rem; margin-bottom: 10px; color: #6b7280; }
+        .role-card.selected .role-icon { color: var(--primary); }
+        
+        /* 列表展示 */
+        .history-item { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr; gap: 8px; padding: 8px; border-bottom: 1px solid #eee; font-size: 0.85rem; align-items: center; }
+        .history-header { font-weight: bold; background: #f9fafb; position: sticky; top: 0; }
+        .result-tag { padding: 2px 6px; border-radius: 4px; color: white; font-size: 0.75rem; text-align: center; }
+        .res-s { background: #8b5cf6; } /* S级/冠军 */
+        .res-a { background: #ef4444; } /* A级/亚军 */
+        .res-b { background: #f59e0b; } /* B级/四强 */
+        .res-c { background: #10b981; } /* C级/八强 */
+        .res-f { background: #9ca3af; } /* 失败 */
+
+        /* 特殊特效 */
+        .ascension-modal { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: white; border: 2px solid #f59e0b; }
+        .ascension-modal .modal-title { color: #f59e0b; text-shadow: 0 0 10px rgba(245, 158, 11, 0.5); font-size: 1.5rem; }
+        .ascension-modal .modal-header, .ascension-modal .modal-footer { background: transparent; border-color: rgba(255,255,255,0.1); }
+        .ascension-btn { background: linear-gradient(to right, #f59e0b, #d97706); border: none; box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); color: white; font-weight: bold; padding: 12px 30px; font-size: 1.1rem; }
+
+        .buff-tag { display: inline-block; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-right: 4px; margin-bottom: 4px; }
+        
+        .tooltip { position: relative; }
+        .tooltip:hover::after { content: attr(data-tip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; white-space: nowrap; z-index: 10; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <!-- 开始界面 -->
+    <div id="start-screen">
+        <h1 style="font-size: 2.5rem; color: var(--primary); margin-bottom: 10px;">CSGO 模拟器 <span style="font-size: 1rem; color: #9ca3af; vertical-align: middle;">v1.0</span></h1>
+        <p style="color: #4b5563; margin-bottom: 5px;">作者：<a href="https://github.com/YKL17" target="_blank" style="color: var(--primary);">yk</a> | 测试：donk, 载物</p>
+        <p style="color: #6b7280; margin-bottom: 30px;">从路人天梯到 Major 冠军，体验真实的职业生涯。</p>
+        
+        <h3 style="text-align: left; padding-left: 10px; border-left: 4px solid var(--primary);">选择你的出身</h3>
+        <div class="role-grid" id="role-container">
+            <!-- 角色卡片由 JS 生成 -->
+        </div>
+        <div style="margin-top: 40px;">
+            <button class="btn btn-primary" id="btn-start-game" disabled style="font-size: 1.2rem; padding: 12px 40px;">
+                <i class="fa-solid fa-play"></i> 开始新的生涯
+            </button>
+        </div>
+    </div>
+
+    <!-- 游戏主界面 -->
+    <div id="game-container">
+        <!-- 顶部信息栏 -->
+        <div class="area-info panel">
+            <div style="font-size: 1.2rem; font-weight: bold;">
+                <i class="fa-regular fa-calendar-days"></i> 
+                <span id="date-display">第 1 年 1 月</span>
+                <span style="font-size: 0.9rem; color: #6b7280; margin-left: 10px;" id="career-left">剩余生涯: 36 个月</span>
+            </div>
+            <div style="background: #fff; padding: 6px 16px; border-radius: 20px; border: 1px solid var(--accent); color: var(--accent); font-weight: bold;">
+                目标: <span id="objective-display">新人阶段 (积分 ≥ 1)</span>
+            </div>
+        </div>
+
+        <!-- 个人属性栏 -->
+        <div class="area-stats panel">
+            <div class="panel-header">
+                <span><i class="fa-solid fa-user"></i> 个人属性</span>
+                <div class="money-display"><i class="fa-solid fa-coins"></i> <span id="money-val">0</span></div>
+            </div>
+            <div id="stats-container">
+                <!-- 属性条 JS 生成 -->
+            </div>
+            <div style="padding: 12px; border-top: 1px solid #f3f4f6;">
+                <button class="btn btn-warning" style="width: 100%" onclick="game.openShop()">
+                    <i class="fa-solid fa-store"></i> 访问商店
+                </button>
+            </div>
+            <div class="panel-header" style="border-top: 1px solid var(--border);">
+                <span><i class="fa-solid fa-bolt"></i> 当前 Buff</span>
+            </div>
+            <div id="buff-container" style="padding: 12px; flex: 1;" class="scroll-y">
+                <!-- Buff 列表 -->
+            </div>
+        </div>
+
+        <!-- 战绩成果栏 -->
+        <div class="area-results panel">
+            <div class="panel-header">
+                <span><i class="fa-solid fa-trophy"></i> 战绩中心</span>
+                <span id="total-score" style="color: var(--primary);">职业积分: 0</span>
+            </div>
+            <div style="padding: 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; border-bottom: 1px solid #f3f4f6;">
+                <div><div style="font-size:0.8rem; color:#6b7280;">总击杀</div><div id="stat-k" style="font-weight:bold;">0</div></div>
+                <div><div style="font-size:0.8rem; color:#6b7280;">总奖金</div><div id="stat-money" style="font-weight:bold;">0</div></div>
+                <div><div style="font-size:0.8rem; color:#6b7280;">S级冠军</div><div id="stat-s-wins" style="font-weight:bold;">0</div></div>
+                <div><div style="font-size:0.8rem; color:#6b7280;">Major最好</div><div id="stat-major-best" style="font-weight:bold;">-</div></div>
+            </div>
+            <div id="history-list" class="scroll-y" style="flex: 1;">
+                <div class="history-item history-header">
+                    <div>赛事</div><div>级别</div><div>积分</div><div>K</div><div>奖金</div><div>结果</div>
+                </div>
+                <!-- 历史记录 -->
+            </div>
+        </div>
+
+        <!-- 操作栏 -->
+        <div class="area-actions panel">
+            <div class="panel-header">
+                <span><i class="fa-solid fa-gamepad"></i> 操作</span>
+            </div>
+            <div class="action-grid">
+                <button class="btn btn-outline action-btn" id="btn-demo" onclick="game.actionDemo()">
+                    <i class="fa-solid fa-video"></i> 看 Demo
+                    <span style="font-size:0.75rem; color:#6b7280;">SAN-2 | 战术++</span>
+                </button>
+                <button class="btn btn-outline action-btn" id="btn-work" onclick="game.actionWork()">
+                    <i class="fa-solid fa-briefcase"></i> 打工
+                    <span style="font-size:0.75rem; color:#6b7280;">SAN-4 | 金币+2</span>
+                </button>
+                <button class="btn btn-outline action-btn" id="btn-tactics" onclick="game.actionTactics()">
+                    <i class="fa-solid fa-chess-board"></i> 想战术
+                    <span style="font-size:0.75rem; color:#6b7280;">SAN-2 | 战术分UP</span>
+                </button>
+                <button class="btn btn-outline action-btn" id="btn-scrim" onclick="game.actionScrim()">
+                    <i class="fa-solid fa-crosshairs"></i> 打训练赛
+                    <span style="font-size:0.75rem; color:#6b7280;">SAN-3 | 训练分UP</span>
+                </button>
+                <button class="btn btn-outline action-btn" id="btn-ladder" onclick="game.actionLadder()">
+                    <i class="fa-solid fa-list-ol"></i> 打天梯
+                    <span style="font-size:0.75rem; color:#6b7280;">SAN-4 | 实战分UP</span>
+                </button>
+                <button class="btn btn-primary action-btn" id="btn-next" onclick="game.nextMonth()">
+                    <i class="fa-solid fa-calendar-check"></i> 进入下个月
+                    <span style="font-size:0.75rem; color:rgba(255,255,255,0.8);">结算</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 游戏日志 -->
+        <div class="area-logs panel">
+            <div class="panel-header">
+                <span><i class="fa-solid fa-terminal"></i> 游戏日志</span>
+            </div>
+            <div id="log-list" class="scroll-y" style="flex: 1;"></div>
+        </div>
+
+        <!-- 赛事工作站 -->
+        <div class="area-workstation panel">
+            <div class="panel-header">
+                <span><i class="fa-solid fa-briefcase"></i> 赛事工作站</span>
+            </div>
+            <div id="slots-container" class="scroll-y" style="flex: 1; background: #f9fafb;">
+                <!-- 槽位 JS 生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态弹窗容器 -->
+    <div id="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">标题</div>
+                <button class="btn btn-outline" style="padding: 4px 8px;" onclick="ui.closeModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body"></div>
+            <div class="modal-footer"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- 核心配置与数据 ---
+        const ROLES = [
+            { id: 'normie', name: '大多数', desc: '没有任何属性变化', stats: {} },
+            { id: 'aimer', name: '天才枪男', desc: '枪法初始 +5', stats: { aim: 5 } },
+            { id: 'tactician', name: '战术大师', desc: '战术意识初始 +5', stats: { tactics: 5 } },
+            { id: 'rich', name: '富可敌国', desc: '金币值初始 +5', stats: { money: 5 } },
+            { id: 'pet', name: '教练宠儿', desc: '教练好感度初始 +5', stats: { coach: 5 } },
+            { id: 'chosen', name: '天选之人', desc: '全属性 +2', stats: { aim: 2, tactics: 2, coach: 2, money: 2 } }
+        ];
+
+        const SHOP_ITEMS = [
+            { id: 'coffee', name: '冰美式', cost: 1, type: 'consumable', desc: '心态值+2', icon: 'fa-mug-hot' },
+            { id: 'server_rent', name: '租训练服务器', cost: 2, type: 'temp_buff', desc: 'Buff: 下次打训练赛多打1次', icon: 'fa-server' },
+            { id: 'tactics_review', name: '战术复盘服务', cost: 3, type: 'temp_buff', desc: 'Buff: 下次想战术分数+5', icon: 'fa-magnifying-glass-chart' },
+            { id: 'ladder_boost', name: '天梯加速器', cost: 3, type: 'temp_buff', desc: 'Buff: 下次打天梯分数+4', icon: 'fa-rocket' },
+            { id: 'coach_lesson', name: '教练私教课', cost: 4, type: 'temp_buff', desc: 'Buff: 下次打训练赛分数+4', icon: 'fa-chalkboard-user' },
+            { id: 'keyboard', name: '机械键盘', cost: 8, type: 'perm_buff', unique: true, desc: '每次打天梯心态消耗-3', icon: 'fa-keyboard' },
+            { id: 'monitor', name: '240Hz显示器', cost: 8, type: 'perm_buff', unique: true, desc: '看Demo心态消耗-1', icon: 'fa-desktop' },
+            { id: 'chair', name: '人体工学椅', cost: 10, type: 'perm_buff', unique: true, desc: '每月恢复心态+1', icon: 'fa-chair' },
+            { id: 'server_buy', name: '购买训练服务器', cost: 12, type: 'perm_buff', desc: '每次打训练赛多打1次', icon: 'fa-network-wired' },
+            { id: 'cheat', name: '小金手指', cost: 0, type: 'cheat', desc: '能力值+1 (每月限1次)', icon: 'fa-hand-point-up' }
+        ];
+
+        // 游戏状态
+        let state = {
+            started: false,
+            role: null,
+            date: { year: 1, month: 1 }, // 1回合=1月
+            phase: 'rookie', // rookie | pro
+            targetScore: 1,
+            stats: {
+                san: 20, maxSan: 20,
+                money: 1,
+                aim: 1, maxAim: 20,
+                tactics: 1, maxTactics: 20,
+                coach: 1, maxCoach: 20
+            },
+            flags: {
+                demoCount: 0,
+                aimUnlockLevel: 0, // 0: 1 slot, 1: 2 slots, etc.
+                sWins: 0,
+                majorBest: 0, // 0: none, 1-8 scale
+                careerKills: 0,
+                totalMoney: 0,
+                totalScore: 0,
+                usedMonthlyActions: [], // 'tactics', 'scrim', 'ladder', 'demo', 'work'
+                boughtCheatThisMonth: false
+            },
+            buffs: [], // { id, name, type, val, count }
+            slots: [], // { id, status: 'empty'|'planning'|'ongoing', name, scores: {tac, trn, real}, monthsLeft, level }
+            history: [], // { event, level, score, k, money, result }
+            logs: []
+        };
+
+        // --- 核心逻辑 ---
+
+        const logic = {
+            init: (roleId) => {
+                const role = ROLES.find(r => r.id === roleId);
+                state.role = role;
+                state.started = true;
+                
+                // 应用角色加成
+                if(role.stats.aim) state.stats.aim += role.stats.aim;
+                if(role.stats.tactics) state.stats.tactics += role.stats.tactics;
+                if(role.stats.coach) state.stats.coach += role.stats.coach;
+                if(role.stats.money) state.stats.money += role.stats.money;
+
+                // 天选之人全属性+2 logic already covered by stats obj above? yes.
+
+                // 初始化槽位
+                state.slots = [{ id: 1, status: 'empty' }];
+
+                logic.log(`生涯开始！角色：${role.name}`);
+                logic.log(`当前目标：新人阶段 (职业积分 ≥ 1)`);
+                ui.render();
+                ui.switchScreen('game');
+            },
+
+            log: (msg, type = 'normal') => {
+                const dateStr = `Y${state.date.year}/M${state.date.month}`;
+                state.logs.unshift({ date: dateStr, msg, type });
+                ui.renderLogs();
+            },
+
+            // 数值变更通用函数（含日志）
+            modStat: (key, val, reason) => {
+                const oldVal = state.stats[key];
+                let newVal = oldVal + val;
+                
+                // 上下限
+                if (key === 'san') newVal = Math.min(newVal, state.stats.maxSan); // SAN allow < 0 trigger end
+                else if (key !== 'money') newVal = Math.max(0, Math.min(20, newVal));
+
+                state.stats[key] = newVal;
+                
+                const diffStr = val > 0 ? `+${val}` : `${val}`;
+                const nameMap = { san: '心态', money: '金币', aim: '枪法', tactics: '战术意识', coach: '教练好感度' };
+                logic.log(`${nameMap[key]} ${oldVal} → ${newVal} (${reason})`, val > 0 ? 'pos' : 'neg');
+
+                // Check endings immediately if critical stats drop below 0
+                if (key === 'san' && newVal < 0) logic.triggerEnding('san_fail');
+                if (key === 'money' && newVal < 0) logic.triggerEnding('money_fail');
+                if (key === 'coach' && newVal < 0) logic.triggerEnding('coach_fail');
+
+                // Check Unlocks
+                if (key === 'aim') logic.checkUnlocks();
+            },
+
+            checkUnlocks: () => {
+                const aim = state.stats.aim;
+                const currentSlots = state.slots.length;
+                let newSlots = 1;
+                if (aim >= 18) newSlots = 4;
+                else if (aim >= 12) newSlots = 3;
+                else if (aim >= 6) newSlots = 2;
+
+                if (newSlots > currentSlots) {
+                    for(let i = currentSlots; i < newSlots; i++) {
+                        state.slots.push({ id: i + 1, status: 'empty' });
+                        logic.log(`枪法达到 ${aim}，解锁新的赛事槽位！`, 'pos');
+                        ui.showModal('新能力', `你的枪法已臻化境（${aim}），战队为你分配了更多的赛事资源！解锁了新的赛事槽位。`, []);
+                    }
+                }
+            },
+
+            // 获取 Buff 加成后的值
+            getBuffedVal: (baseVal, type) => {
+                // type: 'train_count', 'tactics_score', etc.
+                let val = baseVal;
+                // 乘法
+                // state.buffs.forEach(...)
+                // 加法
+                state.buffs.forEach(b => {
+                    if (b.effectType === type) val += b.val;
+                });
+                return val;
+            },
+
+            consumeBuff: (type) => {
+                // 移除临时 buff
+                const idx = state.buffs.findIndex(b => b.effectType === type && b.temp);
+                if (idx >= 0) {
+                    const b = state.buffs[idx];
+                    state.buffs.splice(idx, 1);
+                    logic.log(`消耗 Buff: ${b.name}`);
+                }
+            },
+            
+            hasBuff: (id) => state.buffs.some(b => b.id === id),
+
+            // 核心公式：更新分数
+            calcNewScore: (baseAttr, buffType, currentScore) => {
+                const base = state.stats[baseAttr]; // e.g., tactics
+                let bonus = 0;
+                
+                // 查找 buff
+                const buff = state.buffs.find(b => b.effectType === buffType);
+                if(buff) {
+                    bonus = buff.val;
+                    if(buff.temp) logic.consumeBuff(buffType);
+                }
+
+                // 公式: round(random(0.5, 1.5) * 基础值 + random(0, 5))
+                const mult = 0.5 + Math.random(); // 0.5 - 1.5
+                const randAdd = Math.floor(Math.random() * 6); // 0-5
+                let result = Math.round(mult * base + randAdd) + bonus;
+                
+                // 实战分特殊：取均值
+                if(baseAttr === 'mix') {
+                    const mixBase = Math.round((state.stats.aim + state.stats.tactics) / 2);
+                    result = Math.round(mult * mixBase + randAdd) + bonus;
+                }
+
+                if (result > currentScore) {
+                    logic.log(`分数更新: ${currentScore} → ${result} (基值${baseAttr==='mix'?Math.round((state.stats.aim+state.stats.tactics)/2):state.stats[baseAttr]} × ${mult.toFixed(2)} + ${randAdd} + Buff${bonus})`, 'pos');
+                    return result;
+                } else {
+                    logic.log(`分数未提升: 计算结果 ${result} ≤ 当前 ${currentScore} (基值${baseAttr==='mix'?Math.round((state.stats.aim+state.stats.tactics)/2):state.stats[baseAttr]} × ${mult.toFixed(2)} + ${randAdd} + Buff${bonus})`);
+                    return currentScore;
+                }
+            },
+
+            // 进入下个月
+            nextMonth: () => {
+                // 1. 结算
+                let salary = state.phase === 'rookie' ? 1 : 3;
+                logic.modStat('money', salary, '发工资');
+                logic.modStat('money', -1, '每月开销');
+                
+                let sanRec = 1;
+                if (logic.hasBuff('chair')) sanRec += 1;
+                logic.modStat('san', sanRec, '休息恢复');
+
+                // 2. 赛事计划衰减 & 进度
+                state.slots.forEach(slot => {
+                    if (slot.status === 'planning') {
+                        slot.scores.tac = Math.max(1, slot.scores.tac - 1);
+                        slot.scores.trn = Math.max(1, slot.scores.trn - 1);
+                    } else if (slot.status === 'ongoing') {
+                        slot.scores.tac = Math.max(1, slot.scores.tac - 1);
+                        slot.scores.trn = Math.max(1, slot.scores.trn - 1);
+                        slot.monthsLeft--;
+                        if (slot.monthsLeft <= 0) {
+                            logic.resolveMatch(slot);
+                        }
+                    }
+                });
+
+                // 3. 时间流逝
+                state.date.month++;
+                state.flags.boughtCheatThisMonth = false;
+                state.flags.usedMonthlyActions = []; // Reset continuous actions
+                if (state.date.month > 12) {
+                    state.date.month = 1;
+                    state.date.year++;
+                    // 年度事件: Steam打折 (2月) handle below
+                }
+
+                // 4. 事件触发
+                const m = state.date.month;
+                
+                // Major (6月 & 12月)
+                if (m === 6 || m === 12) logic.triggerMajor();
+                
+                // Top 20 (12月 after Major)
+                if (m === 12) logic.triggerTop20();
+
+                // Steam Sale (2月)
+                if (m === 2) {
+                    ui.showModal('Steam 春节特惠', 'G胖带着绿色的折扣图标来了！', [
+                        { text: '买买买! (金币-1, SAN+3)', class: 'btn-primary', cb: () => { 
+                            if(state.stats.money >=1) { logic.modStat('money', -1, 'Steam特惠'); logic.modStat('san', 3, '买到了游戏'); }
+                            else logic.log('钱不够，只能看着流泪。');
+                            ui.closeModal();
+                        }},
+                        { text: '忍住不买 (无事发生)', class: 'btn-outline', cb: () => ui.closeModal() }
+                    ]);
+                }
+
+                // Holidays (5月 & 11月)
+                if (m === 5) logic.modStat('san', 2, '劳动节假期');
+                if (m === 11) logic.modStat('san', 3, '休赛期度假');
+
+                // 随机事件 (从第2个月开始，每2月)
+                const totalMonths = (state.date.year - 1) * 12 + m;
+                if (totalMonths > 1 && totalMonths % 2 === 0) {
+                    logic.triggerRandomEvent();
+                }
+
+                // 5. 检查生涯阶段
+                logic.checkCareerProgress();
+
+                ui.render();
+            },
+
+            // 小比赛结果结算
+            resolveMatch: (slot) => {
+                const { level, scores } = slot;
+                // 阈值定义 (C/B/A/S)
+                const thresholds = {
+                    'C': { self: 10, team: 10, opp: 5 },
+                    'B': { self: 15, team: 15, opp: 10 },
+                    'A': { self: 20, team: 20, opp: 15 },
+                    'S': { self: 25, team: 25, opp: 25 }
+                };
+                const th = thresholds[level];
+
+                // 1. 自己发挥 (枪法 + SAN + 战术) + 随机
+                // 使用报名时的 scores (已保存 snapshot? No, requirements say use snapshot OR current? Req 10.1 says "don't consider decay". 
+                // Let's assume logic.startMatch saved the snapshot scores into slot.savedScores.
+                const finalScores = slot.savedScores; 
+                
+                // 计算三方分值 (Accept=1, Border=0, Reject=-1)
+                
+                // Self: Base = Aim*1.5 + Tac*0.5 + SAN*0.2
+                // 这里我们简化模型以适配 0-20 属性
+                // GDD 10.2: Self based on Aim, SAN, Tac.
+                // Formula: (Aim + Tac/2 + SAN/4) + Random(-3, 3)
+                const selfBase = state.stats.aim + (state.stats.tactics * 0.5) + (state.stats.san * 0.2);
+                const selfRand = Math.floor(Math.random() * 7) - 3;
+                const selfTotal = selfBase + selfRand;
+                const selfRes = selfTotal >= th.self ? 1 : (selfTotal >= th.self - 5 ? 0 : -1);
+                
+                // Team: Coach, Tac. Formula: (Coach + Tac) + Random(-3, 3)
+                const teamBase = state.stats.coach + state.stats.tactics;
+                const teamRand = Math.floor(Math.random() * 7) - 3;
+                const teamTotal = teamBase + teamRand;
+                const teamRes = teamTotal >= th.team ? 1 : (teamTotal >= th.team - 5 ? 0 : -1);
+
+                // Opp: Tier based. Opponent Strength = Threshold constant. 
+                // My reduction: Tac. High Tac reduces Opp strength.
+                // Formula: OppStrength - (Tac * 0.8). Compare to fixed standard.
+                // Let's reverse: Win if (Tac + Random) > OppDifficulty
+                const oppDiff = th.opp * 1.5; // Difficulty
+                const oppPerf = (state.stats.tactics * 1.2) + (Math.floor(Math.random() * 7) - 3);
+                // If I outperform opp difficulty -> Opponent plays bad (1 for me). 
+                const oppRes = oppPerf >= oppDiff ? 1 : (oppPerf >= oppDiff - 5 ? 0 : -1);
+
+                const totalRes = selfRes + teamRes + oppRes; // -3 to 3
+
+                // 文案
+                const txtSelf = selfRes === 1 ? "手感火热" : (selfRes === 0 ? "中规中矩" : "马枪白给");
+                const txtTeam = teamRes === 1 ? "队友带飞" : (teamRes === 0 ? "正常交流" : "队友自闭");
+                const txtOpp = oppRes === 1 ? "拿捏对手" : (oppRes === 0 ? "有来有回" : "对手枪硬");
+
+                // 结果判定
+                let resultType = ''; // fail, c_pass, b_pass, a_pass
+                let title = '';
+                let points = 0, money = 0, kills = 0;
+
+                if (totalRes < 0) {
+                    resultType = 'fail'; title = '淘汰出局';
+                    points = 0; money = 0;
+                } else if (totalRes <= 1) {
+                    resultType = 'pass'; title = '成功晋级';
+                    points = level === 'S' ? 2 : 1; money = level === 'S' ? 2 : 1;
+                } else if (totalRes === 2) {
+                    resultType = 'burst'; title = '四强爆种';
+                    points = level === 'S' ? 3 : 2; money = level === 'S' ? 4 : 2;
+                } else {
+                    resultType = 'win'; title = '捧杯夺冠';
+                    points = level === 'S' ? 4 : (level === 'A'? 2 : 1); 
+                    money = level === 'S' ? 8 : (level === 'A' ? 4 : 2);
+                }
+
+                // 击杀数: Based on score. 
+                kills = Math.round((finalScores.trn + finalScores.real) / 2) + Math.floor(Math.random()*10);
+                if(resultType === 'fail') kills = Math.floor(kills / 2);
+
+                // 复盘收益
+                let rewardsLog = [];
+                if (teamRes === 1) { 
+                    // Random boost
+                    const types = ['tac', 'trn', 'real']; // mapped to score keys? No, modify slot? Slot is gone. Modify stats? No GDD says "Tactics/Train/Real score +3". But slot is cleared. 
+                    // GDD 10.5 says: "Random one (Tactics/Train/Real) +3 (Team chemistry up)". This implies persistent benefit? Or for next plan? 
+                    // Let's interpret as: Permanent Stat boost small chance OR Temp buff for next.
+                    // Actually GDD 10.5 says "Random ... +3". Since slot is cleared, this must mean STATS or next slot. 
+                    // Given the context, let's make it a global Buff "Team Chemistry": Next Plan Start Score +3.
+                    state.buffs.push({ id: Date.now(), name: '团队磨合', effectType: 'next_plan_bonus', val: 3, count: 1, temp: true });
+                    rewardsLog.push("团队磨合: 下次新计划初始分+3");
+                }
+                if (selfRes === 1) {
+                    if (state.stats.aim < 20) { logic.modStat('aim', 1, '比赛手感'); rewardsLog.push("枪法+1"); }
+                }
+                if (oppRes === 1) {
+                    logic.modStat('san', -2, '过度研究对手'); rewardsLog.push("心态-2");
+                }
+
+                // 首次加成
+                if (resultType !== 'fail') {
+                    if (!state.flags.hasWonAny) {
+                        state.flags.hasWonAny = true;
+                        logic.modStat('aim', 1, '首胜奖励');
+                        rewardsLog.push("首胜: 枪法+1");
+                    }
+                    if (level === 'S' && !state.flags.hasWonS) {
+                        state.flags.hasWonS = true;
+                        logic.modStat('aim', 1, '首个S级奖励');
+                        rewardsLog.push("S级突破: 枪法+1");
+                    }
+                }
+
+                // 更新全局
+                state.stats.money += money;
+                state.flags.totalScore += points;
+                state.flags.totalMoney += money;
+                state.flags.careerKills += kills;
+                if(resultType === 'win' && level === 'S') state.flags.sWins++;
+
+                // 记录历史
+                state.history.push({ 
+                    name: slot.name, level, points, k: kills, money, result: title, year: state.date.year 
+                });
+
+                // 弹窗
+                const detailHtml = `
+                    <div style="background:#f9fafb; padding:10px; border-radius:6px; margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                            <span>自己: ${txtSelf} (${selfRes})</span>
+                            <span style="color:#6b7280; font-size:0.8rem;">基准${selfTotal.toFixed(1)} / 阈值${th.self}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                            <span>队友: ${txtTeam} (${teamRes})</span>
+                            <span style="color:#6b7280; font-size:0.8rem;">基准${teamTotal.toFixed(1)} / 阈值${th.team}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span>对手: ${txtOpp} (${oppRes})</span>
+                            <span style="color:#6b7280; font-size:0.8rem;">基准${oppPerf.toFixed(1)} / 难度${oppDiff}</span>
+                        </div>
+                    </div>
+                    <p><strong>结果: ${title}</strong></p>
+                    <p>奖励: 积分+${points}, 奖金+${money}, 击杀+${kills}</p>
+                    ${rewardsLog.length ? `<p style="color:#059669; font-size:0.9rem;">${rewardsLog.join(', ')}</p>` : ''}
+                `;
+
+                ui.showModal(`${level}级赛事结算`, detailHtml, [
+                    { text: '确定', class: 'btn-primary', cb: () => ui.closeModal() }
+                ]);
+
+                // 清空槽位
+                slot.status = 'empty';
+                logic.log(`赛事结算 [${slot.name}]: ${title} (总分${totalRes})`);
+            },
+
+            // Major 系统
+            triggerMajor: () => {
+                const isWinter = state.date.month === 12;
+                // 计算 Major 实力分 = Aim*2 + Tac + Coach + SAN*0.5 + YearlyPerformance
+                // YearlyPerformance: S wins * 5 + Points * 1
+                // Current year stats filtering
+                const thisYearHistory = state.history.filter(h => h.year === state.date.year);
+                const perfScore = thisYearHistory.reduce((acc, cur) => acc + (cur.result === '捧杯夺冠' && cur.level === 'S' ? 5 : 0) + cur.points, 0);
+                
+                const power = (state.stats.aim * 2) + state.stats.tactics + state.stats.coach + (state.stats.san * 0.5) + perfScore;
+                const rand = Math.floor(Math.random() * 20) - 10;
+                const finalScore = power + rand;
+
+                // 梯度
+                let rank = '', rewardPoints = 0, rewardMoney = 0, rewardK = 0, rewardCoach = 0;
+                if (finalScore < 20) { rank = '未入选'; }
+                else if (finalScore < 35) { rank = '资格赛出局'; rewardMoney=1; }
+                else if (finalScore < 50) { rank = '小组赛出局'; rewardMoney=2; rewardPoints=1; rewardK=50; }
+                else if (finalScore < 65) { rank = '16强'; rewardMoney=5; rewardPoints=2; rewardK=100; rewardCoach=1; }
+                else if (finalScore < 80) { rank = '八强'; rewardMoney=10; rewardPoints=4; rewardK=150; rewardCoach=2; }
+                else if (finalScore < 95) { rank = '四强'; rewardMoney=20; rewardPoints=6; rewardK=200; rewardCoach=3; }
+                else if (finalScore < 110) { rank = '亚军'; rewardMoney=40; rewardPoints=8; rewardK=300; rewardCoach=4; }
+                else { rank = '冠军'; rewardMoney=100; rewardPoints=10; rewardK=500; rewardCoach=5; state.flags.majorBest = 8; }
+
+                // Update Stats
+                if(rewardPoints > 0) state.flags.totalScore += rewardPoints;
+                if(rewardMoney > 0) logic.modStat('money', rewardMoney, 'Major奖金');
+                if(rewardCoach > 0) logic.modStat('coach', rewardCoach, 'Major表现');
+                state.flags.careerKills += rewardK;
+
+                // Log history
+                state.history.push({ name: `Major ${state.date.year}.${isWinter?12:6}`, level: 'Major', points: rewardPoints, k: rewardK, money: rewardMoney, result: rank, year: state.date.year });
+
+                const msg = `Major 征程结束: ${rank} (实力分 ${finalScore.toFixed(1)})`;
+                ui.showModal(`${state.date.year}年 ${isWinter?'冬季':'夏季'} Major`, `
+                    <p>你的队伍整装待发，经过残酷的角逐...</p>
+                    <h2 style="text-align:center; color:var(--primary); margin: 20px 0;">${rank}</h2>
+                    <p>实力评估: ${power.toFixed(1)} + 运气(${rand}) = ${finalScore.toFixed(1)}</p>
+                    <p>奖励: 积分+${rewardPoints}, 奖金+${rewardMoney}, 教练好感+${rewardCoach}</p>
+                `, [{text:'确定', class:'btn-primary', cb:()=>ui.closeModal()}]);
+                
+                logic.log(msg, 'pos');
+            },
+
+            // Top 20
+            triggerTop20: () => {
+                // Year Score = Honor + Data + Status + Rand
+                const thisYearHistory = state.history.filter(h => h.year === state.date.year);
+                
+                let honor = 0;
+                thisYearHistory.forEach(h => {
+                    if(h.level === 'Major') {
+                        if(h.result === '冠军') honor += 50;
+                        else if(h.result === '亚军') honor += 30;
+                        else if(h.result === '四强') honor += 20;
+                        else if(h.result === '八强') honor += 10;
+                    } else if(h.level === 'S' && h.result === '捧杯夺冠') honor += 10;
+                });
+
+                let dataScore = 0; 
+                const kills = thisYearHistory.reduce((acc, h) => acc + h.k, 0);
+                dataScore = kills / 20; // e.g., 1000 kills -> 50 pts
+
+                const statusScore = state.stats.aim + state.stats.tactics + state.stats.coach + state.stats.san; // Max approx 80
+                const rand = Math.floor(Math.random() * 11) - 5; // -5 to 5
+
+                const yearScore = honor + dataScore + statusScore + rand;
+                
+                let rank = '未入选', reward = '';
+                if (yearScore > 180) { 
+                    rank = 'Top 1'; 
+                    logic.modStat('money', 10, 'Top1'); logic.modStat('coach', 5, 'Top1'); logic.modStat('san', 20, 'Top1'); logic.modStat('aim', 1, 'Top1'); logic.modStat('tactics', 1, 'Top1');
+                    reward = '金币+10, 全属性提升, SAN回满';
+                } else if (yearScore > 150) {
+                    rank = 'Top 3';
+                    logic.modStat('money', 6, 'Top3'); logic.modStat('coach', 3, 'Top3'); logic.modStat('san', 3, 'Top3'); logic.modStat('aim', 1, 'Top3');
+                    reward = '金币+6, 教练+3, SAN+3, 枪法+1';
+                } else if (yearScore > 120) {
+                    rank = 'Top 10';
+                    logic.modStat('money', 4, 'Top10'); logic.modStat('coach', 2, 'Top10'); logic.modStat('san', 2, 'Top10');
+                    reward = '金币+4, 教练+2, SAN+2';
+                } else if (yearScore > 90) {
+                    rank = 'Top 20';
+                    logic.modStat('money', 2, 'Top20'); logic.modStat('coach', 1, 'Top20');
+                    reward = '金币+2, 教练+1';
+                }
+
+                ui.showModal('HLTV 年度 Top 20 评选', `
+                    <p>全球 CSGO 社区屏息以待...</p>
+                    <h2 style="text-align:center; color:var(--accent); margin: 20px 0;">${rank}</h2>
+                    <p style="font-size:0.9rem; color:#6b7280;">评分: ${yearScore.toFixed(1)} (荣誉${honor} + 数据${dataScore.toFixed(1)} + 状态${statusScore} + 浮动${rand})</p>
+                    ${reward ? `<p>奖励: ${reward}</p>` : ''}
+                `, [{text:'牛逼', class:'btn-primary', cb:()=>ui.closeModal()}]);
+                
+                logic.log(`年度评选: ${rank} (评分 ${yearScore.toFixed(1)})`, 'pos');
+            },
+
+            // 检查生涯
+            checkCareerProgress: () => {
+                const totalMonths = (state.date.year - 1) * 12 + state.date.month;
+                
+                // 转职业判断 (Year 2 or 3)
+                if (state.phase === 'rookie' && state.date.year >= 2) {
+                    const threshold = state.date.year === 2 ? 2 : 3;
+                    if (state.flags.totalScore >= threshold && !state.flags.ascensionOffered) {
+                        state.flags.ascensionOffered = true;
+                        ui.showAscensionModal();
+                    }
+                }
+
+                // 结局判断
+                // Rookie fail: End of Year 3 and score < 1
+                if (state.phase === 'rookie' && totalMonths > 36 && state.flags.totalScore < 1) {
+                    logic.triggerEnding('rookie_fail');
+                }
+                // Pro fail: End of Year 10 and score < 7
+                if (state.phase === 'pro' && totalMonths > 120 && state.flags.totalScore < 7) {
+                    logic.triggerEnding('pro_fail');
+                }
+                // Good ending: End of Year 10 and score >= 7
+                if (state.phase === 'pro' && totalMonths > 120) {
+                    logic.triggerEnding('success');
+                }
+            },
+
+            triggerEnding: (type) => {
+                let title = '游戏结束', desc = '';
+                const stats = `
+                    <hr>
+                    <p>生涯总结:</p>
+                    <ul>
+                        <li>职业积分: ${state.flags.totalScore}</li>
+                        <li>总击杀: ${state.flags.careerKills}</li>
+                        <li>总奖金: ${state.flags.totalMoney}</li>
+                        <li>S级冠军: ${state.flags.sWins}</li>
+                    </ul>
+                `;
+
+                switch(type) {
+                    case 'san_fail': desc = '你不堪重负，心态彻底崩盘，删除了游戏并退役。'; break;
+                    case 'money_fail': desc = '你破产了，卖掉了电脑和饰品，只能去电子厂打工。'; break;
+                    case 'coach_fail': desc = '你与教练和管理层彻底决裂，被踢出战队且无队敢要。'; break;
+                    case 'rookie_fail': desc = '三年之期已到，你没能证明自己，只能黯然退役回去读书。'; break;
+                    case 'pro_fail': desc = '十年职业生涯，你始终是那个边缘人，最终只能在次级联赛默默退役。'; break;
+                    case 'success':
+                        title = '光荣退役';
+                        if (state.flags.sWins >= 5 || state.flags.majorBest === 8) desc = '你是当之无愧的传奇！你的名字将被铭刻在 CSGO 的历史中。';
+                        else if (state.flags.sWins >= 1) desc = '你是一线明星选手，拥有辉煌的职业生涯。';
+                        else desc = '你是一名合格的职业选手，虽然没有登顶，但也留下了足迹。';
+                        break;
+                }
+
+                ui.showModal(title, desc + stats, [
+                    { text: '重新开始', class: 'btn-danger', cb: () => location.reload() }
+                ]);
+            },
+
+            triggerRandomEvent: () => {
+                // 简化版随机事件库
+                const events = [
+                    { text: '鼠标微动坏了', effect: () => { logic.modStat('money', -1, '修鼠标'); } },
+                    { text: '粉丝寄来礼物', effect: () => { logic.modStat('san', 2, '粉丝礼物'); } },
+                    { text: '排位遇到挂壁', effect: () => { logic.modStat('san', -2, '被挂壁破防'); } },
+                    { text: '意外发现新战术', effect: () => { logic.modStat('tactics', 1, '灵光一闪'); } }
+                ];
+                const evt = events[Math.floor(Math.random() * events.length)];
+                ui.showModal('突发事件', evt.text, [{text:'确定', class:'btn-primary', cb:()=>{
+                    evt.effect();
+                    ui.closeModal();
+                }}]);
+            },
+
+            // 转职业处理
+            ascendToPro: () => {
+                state.phase = 'pro';
+                state.targetScore = 7;
+                logic.log('晋升职业选手！目标更新：积分 ≥ 7', 'pos');
+
+                // 加成
+                const roleId = state.role.id;
+                if (roleId === 'normie') { 
+                    ['aim','tactics','coach','money'].forEach(k => state.stats[k] = Math.min(20, Math.round(state.stats[k] * 2)));
+                    logic.log('我命由我不由天：全属性翻倍');
+                } else if (roleId === 'chosen') {
+                    const max = Math.max(state.stats.aim, state.stats.tactics, state.stats.coach);
+                    state.stats.aim = max; state.stats.tactics = max; state.stats.coach = max;
+                    logic.log('查缺补漏：属性补齐至最高值');
+                } else if (roleId === 'rich') {
+                    state.stats.money = Math.round(state.stats.money * 2);
+                    logic.log('资本运作：金币翻倍');
+                } else if (roleId === 'aimer') { logic.modStat('aim', 2, '天赋兑现'); }
+                else if (roleId === 'tactician') { logic.modStat('tactics', 2, '大师觉醒'); }
+                else if (roleId === 'pet') { logic.modStat('coach', 2, '嫡系转正'); }
+
+                ui.render();
+            }
+        };
+
+        // --- UI 渲染与交互 ---
+
+        const ui = {
+            init: () => {
+                // 生成角色卡
+                const container = document.getElementById('role-container');
+                ROLES.forEach(r => {
+                    const el = document.createElement('div');
+                    el.className = 'role-card';
+                    el.innerHTML = `
+                        <div class="role-icon"><i class="fa-solid fa-user-tag"></i></div>
+                        <h3>${r.name}</h3>
+                        <p style="font-size:0.9rem; color:#6b7280; margin-top:5px;">${r.desc}</p>
+                    `;
+                    el.onclick = () => {
+                        document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+                        el.classList.add('selected');
+                        document.getElementById('btn-start-game').disabled = false;
+                        ui.selectedRole = r.id;
+                    };
+                    container.appendChild(el);
+                });
+
+                document.getElementById('btn-start-game').onclick = () => logic.init(ui.selectedRole);
+            },
+
+            switchScreen: (screen) => {
+                if(screen === 'game') {
+                    document.getElementById('start-screen').style.display = 'none';
+                    document.getElementById('game-container').style.display = 'grid';
+                }
+            },
+
+            render: () => {
+                if(!state.started) return;
+
+                // Info
+                document.getElementById('date-display').textContent = `第 ${state.date.year} 年 ${state.date.month} 月`;
+                const totalMonths = (state.date.year - 1) * 12 + state.date.month;
+                const maxMonths = state.phase === 'rookie' ? 36 : 120;
+                document.getElementById('career-left').textContent = `剩余生涯: ${Math.max(0, maxMonths - totalMonths)} 个月`;
+                document.getElementById('objective-display').textContent = state.phase === 'rookie' ? '新人阶段 (积分 ≥ 1)' : '职业阶段 (积分 ≥ 7)';
+
+                // Stats
+                const statsMap = [
+                    { key: 'san', label: '心态 (SAN)', icon: 'fa-heart-pulse', color: 'stat-san' },
+                    { key: 'aim', label: '枪法', icon: 'fa-crosshairs', color: 'stat-aim' },
+                    { key: 'tactics', label: '战术意识', icon: 'fa-brain', color: 'stat-tac' },
+                    { key: 'coach', label: '教练好感度', icon: 'fa-users', color: 'stat-coach' }
+                ];
+                
+                const statsHtml = statsMap.map(s => `
+                    <div class="stat-row">
+                        <div class="stat-label">
+                            <span><i class="fa-solid ${s.icon}"></i> ${s.label}</span>
+                            <span>${state.stats[s.key]}/${s.key==='san'?state.stats.maxSan:20}</span>
+                        </div>
+                        <div class="progress-bar ${s.color}">
+                            <div class="progress-fill" style="width: ${(state.stats[s.key] / (s.key==='san'?state.stats.maxSan:20)) * 100}%"></div>
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('stats-container').innerHTML = statsHtml;
+                document.getElementById('money-val').textContent = state.stats.money;
+
+                // Buffs
+                const buffMap = {};
+                state.buffs.forEach(b => {
+                    if(!buffMap[b.name]) buffMap[b.name] = 0;
+                    buffMap[b.name]++;
+                });
+                const buffHtml = Object.keys(buffMap).map(k => 
+                    `<span class="buff-tag">${k} ${buffMap[k]>1 ? 'x'+buffMap[k] : ''}</span>`
+                ).join('');
+                document.getElementById('buff-container').innerHTML = buffHtml || '<span style="color:#9ca3af; font-size:0.8rem; padding:0 12px;">暂无 Buff</span>';
+
+                // Results
+                document.getElementById('total-score').textContent = `职业积分: ${state.flags.totalScore}`;
+                document.getElementById('stat-k').textContent = state.flags.careerKills;
+                document.getElementById('stat-money').textContent = state.flags.totalMoney;
+                document.getElementById('stat-s-wins').textContent = state.flags.sWins;
+                document.getElementById('stat-major-best').textContent = state.flags.majorBest > 0 ? (state.flags.majorBest===8 ? '冠军' : '有') : '-';
+
+                // History List
+                const histHtml = state.history.slice().reverse().map(h => {
+                    let resClass = 'res-f';
+                    if (h.result.includes('夺冠') || h.result.includes('冠军')) resClass = 'res-s';
+                    else if (h.result.includes('爆种') || h.result.includes('亚军')) resClass = 'res-a';
+                    else if (h.result.includes('晋级') || h.result.includes('四强')) resClass = 'res-c';
+                    
+                    return `
+                    <div class="history-item">
+                        <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${h.name}</div>
+                        <div>${h.level}</div>
+                        <div>${h.points}</div>
+                        <div>${h.k}</div>
+                        <div>${h.money}</div>
+                        <div><span class="result-tag ${resClass}">${h.result}</span></div>
+                    </div>`;
+                }).join('');
+                const hList = document.getElementById('history-list');
+                const header = hList.querySelector('.history-header').outerHTML;
+                hList.innerHTML = header + histHtml;
+
+                // Buttons State (Continuous actions disabled if used)
+                const used = state.flags.usedMonthlyActions.length > 0;
+                ['btn-demo', 'btn-work', 'btn-tactics', 'btn-scrim', 'btn-ladder'].forEach(id => {
+                    document.getElementById(id).disabled = used;
+                });
+
+                // Workstation
+                ui.renderWorkstation();
+            },
+
+            renderLogs: () => {
+                const list = document.getElementById('log-list');
+                list.innerHTML = state.logs.map(l => `
+                    <div class="log-item">
+                        <div class="log-date">[${l.date}]</div>
+                        <div class="log-content ${l.type === 'pos' ? 'log-change' : (l.type === 'neg' ? 'log-neg' : '')}">${l.msg}</div>
+                    </div>
+                `).join('');
+                // Scroll to top? No, latest is top.
+            },
+
+            renderWorkstation: () => {
+                const container = document.getElementById('slots-container');
+                container.innerHTML = state.slots.map(slot => {
+                    if (slot.status === 'empty') {
+                        return `
+                        <div class="slot-card">
+                            <div class="slot-header">空闲槽位 #${slot.id}</div>
+                            <button class="btn btn-primary btn-sm" style="width:100%" onclick="game.openPlan(${slot.id})">
+                                <i class="fa-solid fa-plus"></i> 开启新赛事计划
+                            </button>
+                        </div>`;
+                    } else if (slot.status === 'planning') {
+                        return `
+                        <div class="slot-card active">
+                            <div class="slot-header">
+                                <span>${slot.name}</span>
+                                <span style="font-size:0.8rem; color:var(--primary);">备战中</span>
+                            </div>
+                            <div class="slot-scores">
+                                <span class="score-badge">战术 ${slot.scores.tac}</span>
+                                <span class="score-badge">训练 ${slot.scores.trn}</span>
+                                <span class="score-badge">实战 ${slot.scores.real}</span>
+                            </div>
+                            <div class="slot-actions">
+                                <button class="btn btn-outline" style="font-size:0.75rem" onclick="game.signUp(${slot.id}, 'C')">C级</button>
+                                <button class="btn btn-outline" style="font-size:0.75rem" onclick="game.signUp(${slot.id}, 'B')">B级</button>
+                                <button class="btn btn-outline" style="font-size:0.75rem" onclick="game.signUp(${slot.id}, 'A')">A级</button>
+                                <button class="btn btn-outline" style="font-size:0.75rem" onclick="game.signUp(${slot.id}, 'S')">S级</button>
+                            </div>
+                            <button class="btn btn-danger" style="width:100%; margin-top:4px; font-size:0.8rem; padding:4px;" onclick="game.discardPlan(${slot.id})">放弃计划</button>
+                        </div>`;
+                    } else if (slot.status === 'ongoing') {
+                        return `
+                        <div class="slot-card slot-locked">
+                            <div class="slot-header">
+                                <span>${slot.name} (${slot.level}级)</span>
+                            </div>
+                            <div style="text-align:center; padding: 10px; color: var(--accent); font-weight:bold;">
+                                赛程进行中... 剩余 ${slot.monthsLeft} 月
+                            </div>
+                            <div class="slot-scores">
+                                <span class="score-badge">锁定: 战术 ${slot.savedScores.tac}</span>
+                                <span class="score-badge">训练 ${slot.savedScores.trn}</span>
+                                <span class="score-badge">实战 ${slot.savedScores.real}</span>
+                            </div>
+                        </div>`;
+                    }
+                }).join('');
+            },
+
+            showModal: (title, html, buttons) => {
+                const overlay = document.getElementById('modal-overlay');
+                overlay.querySelector('.modal-title').textContent = title;
+                overlay.querySelector('.modal-body').innerHTML = html;
+                const footer = overlay.querySelector('.modal-footer');
+                footer.innerHTML = '';
+                buttons.forEach(b => {
+                    const btn = document.createElement('button');
+                    btn.className = `btn ${b.class || 'btn-outline'}`;
+                    btn.textContent = b.text;
+                    btn.onclick = b.cb;
+                    footer.appendChild(btn);
+                });
+                overlay.style.display = 'flex';
+            },
+
+            closeModal: () => {
+                document.getElementById('modal-overlay').style.display = 'none';
+            },
+            
+            showAscensionModal: () => {
+                const modalHtml = `
+                    <div style="text-align:center;">
+                        <i class="fa-solid fa-dragon" style="font-size:4rem; color:#f59e0b; margin-bottom:20px;"></i>
+                        <p style="font-size:1.1rem; margin-bottom:20px;">你的表现引起了顶级战队的注意。是时候离开鱼塘，去更大的舞台了！</p>
+                        <ul style="text-align:left; background:rgba(255,255,255,0.1); padding:15px; border-radius:8px;">
+                            <li>职业目标变更: 积分 ≥ 7</li>
+                            <li>解锁职业生涯专属事件</li>
+                            <li>获得强力属性加成 (根据你的出身)</li>
+                        </ul>
+                    </div>
+                `;
+                // Build manually to add custom class
+                const overlay = document.getElementById('modal-overlay');
+                const modal = overlay.querySelector('.modal');
+                modal.classList.add('ascension-modal');
+                
+                ui.showModal('飞升时刻：转职业', modalHtml, [
+                    { text: '开启职业生涯', class: 'ascension-btn', cb: () => {
+                        logic.ascendToPro();
+                        modal.classList.remove('ascension-modal');
+                        ui.closeModal();
+                    }},
+                    { text: '再等等 (可能会错过机会)', class: 'btn-outline', cb: () => {
+                        modal.classList.remove('ascension-modal');
+                        ui.closeModal();
+                    }}
+                ]);
+            }
+        };
+
+        // --- 游戏操作绑定 ---
+
+        const game = {
+            openShop: () => {
+                const itemsHtml = SHOP_ITEMS.map(item => {
+                    // Check disabled
+                    let disabled = false;
+                    let btnText = '购买';
+                    if (state.stats.money < item.cost) disabled = true;
+                    if (item.unique && logic.hasBuff(item.id)) { disabled = true; btnText = '已拥有'; }
+                    if (item.id === 'cheat' && state.flags.boughtCheatThisMonth) { disabled = true; btnText = '本月限1次'; }
+
+                    return `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <i class="fa-solid ${item.icon}" style="font-size:1.5rem; color:#6b7280;"></i>
+                            <div>
+                                <div style="font-weight:bold;">${item.name}</div>
+                                <div style="font-size:0.8rem; color:#6b7280;">${item.desc}</div>
+                            </div>
+                        </div>
+                        <button class="btn ${disabled?'':'btn-success'}" ${disabled?'disabled':''} onclick="game.buyItem('${item.id}')">
+                            ${btnText} (${item.cost} G)
+                        </button>
+                    </div>`;
+                }).join('');
+                ui.showModal('商店', `<div style="max-height:400px; overflow-y:auto;">${itemsHtml}</div>`, [{text:'关闭', cb:()=>ui.closeModal()}]);
+            },
+
+            buyItem: (id) => {
+                const item = SHOP_ITEMS.find(i => i.id === id);
+                if (state.stats.money < item.cost) return;
+
+                if (id === 'cheat') {
+                    ui.showModal('小金手指', '选择一项能力提升 (不可超过20):', [
+                        { text: '枪法 +1', class: 'btn-primary', cb: () => game.applyCheat('aim') },
+                        { text: '战术意识 +1', class: 'btn-primary', cb: () => game.applyCheat('tactics') },
+                        { text: '教练好感 +1', class: 'btn-primary', cb: () => game.applyCheat('coach') }
+                    ]);
+                    return;
+                }
+
+                logic.modStat('money', -item.cost, '购买 '+item.name);
+                
+                if (item.type === 'consumable') {
+                    if(item.id === 'coffee') logic.modStat('san', 2, '喝冰美式');
+                } else {
+                    // Buffs (Perm or Temp)
+                    state.buffs.push({
+                        id: item.id,
+                        name: item.name,
+                        val: (item.id.includes('score') || item.id.includes('boost')) ? 4 : (item.id==='tactics_review'?5:1),
+                        // map item to effect type
+                        effectType: game.mapItemToEffect(item.id),
+                        temp: item.type === 'temp_buff'
+                    });
+                    logic.log(`获得 Buff: ${item.name}`, 'pos');
+                }
+
+                ui.closeModal(); // Close shop to refresh state visual or keep open? Close easier.
+            },
+
+            mapItemToEffect: (id) => {
+                if(id==='server_rent' || id==='server_buy') return 'train_count';
+                if(id==='tactics_review') return 'tactics_score';
+                if(id==='coach_lesson') return 'train_score';
+                if(id==='ladder_boost') return 'real_score';
+                return 'misc';
+            },
+
+            applyCheat: (attr) => {
+                if (state.stats[attr] >= 20) {
+                    alert('该属性已满，无法提升！'); // Backup alert just in case
+                    return;
+                }
+                logic.modStat(attr, 1, '金手指');
+                state.flags.boughtCheatThisMonth = true;
+                ui.closeModal();
+                ui.closeModal(); // Close cheat modal then shop
+            },
+
+            // --- Actions ---
+            
+            actionDemo: () => {
+                if(state.flags.usedMonthlyActions.length) return;
+                
+                let sanCost = 2;
+                if(logic.hasBuff('monitor')) sanCost -= 1;
+                
+                logic.modStat('san', -sanCost, '看Demo');
+                state.flags.demoCount++;
+                if (state.flags.demoCount % 5 === 0) {
+                    logic.modStat('tactics', 1, 'Demo积累');
+                }
+                state.buffs.push({ id: Date.now(), name: '战术复盘', effectType: 'tactics_score', val: 1, temp: true });
+                state.flags.usedMonthlyActions.push('demo');
+                ui.render();
+            },
+
+            actionWork: () => {
+                if(state.flags.usedMonthlyActions.length) return;
+                logic.modStat('san', -4, '打工');
+                logic.modStat('money', 2, '打工收益');
+                state.flags.usedMonthlyActions.push('work');
+                ui.render();
+            },
+
+            // For Tactics/Scrim/Ladder, we need to pick a slot
+            pickSlot: (actionName, filterCb, cb) => {
+                if(state.flags.usedMonthlyActions.length) return;
+                
+                const validSlots = state.slots.filter(s => s.status === 'planning' && filterCb(s));
+                if (validSlots.length === 0) {
+                    ui.showModal('无法操作', '没有符合条件的赛事计划 (需在备战期，且满足前置分数条件)。', [{text:'好的', cb:()=>ui.closeModal()}]);
+                    return;
+                }
+
+                const html = validSlots.map(s => 
+                    `<button class="btn btn-outline" style="width:100%; margin-bottom:8px; justify-content:space-between;" onclick="game.executeAction('${actionName}', ${s.id})">
+                        <span>${s.name}</span>
+                        <span style="font-size:0.8rem; color:#6b7280;">战${s.scores.tac}/训${s.scores.trn}/实${s.scores.real}</span>
+                    </button>`
+                ).join('');
+                ui.showModal(`选择计划进行: ${actionName}`, html, [{text:'取消', cb:()=>ui.closeModal()}]);
+            },
+
+            executeAction: (type, slotId) => {
+                const slot = state.slots.find(s => s.id === slotId);
+                let sanCost = 0;
+                let loops = 1;
+
+                if (type === 'tactics') {
+                    sanCost = 2;
+                    const newScore = logic.calcNewScore('tactics', 'tactics_score', slot.scores.tac);
+                    slot.scores.tac = newScore;
+                } else if (type === 'scrim') {
+                    sanCost = 3;
+                    loops = 1 + logic.getBuffedVal(0, 'train_count'); // Base 0, adds buffs
+                    // Consume temp buff for count
+                    logic.consumeBuff('train_count');
+                    
+                    for(let i=0; i<loops; i++) {
+                        const newScore = logic.calcNewScore('aim', 'train_score', slot.scores.trn);
+                        slot.scores.trn = newScore;
+                    }
+                } else if (type === 'ladder') {
+                    sanCost = 4;
+                    if(logic.hasBuff('keyboard')) sanCost -= 3;
+                    const newScore = logic.calcNewScore('mix', 'real_score', slot.scores.real);
+                    slot.scores.real = newScore;
+                }
+
+                logic.modStat('san', -sanCost, type);
+                state.flags.usedMonthlyActions.push(type);
+                ui.closeModal();
+                ui.render();
+            },
+
+            actionTactics: () => game.pickSlot('tactics', () => true, null),
+            actionScrim: () => game.pickSlot('scrim', (s) => s.scores.tac > 0, null),
+            actionLadder: () => game.pickSlot('ladder', (s) => s.scores.trn > 0, null),
+            nextMonth: () => logic.nextMonth(),
+
+            // Workstation Ops
+            openPlan: (id) => {
+                const names = ['IEM Cologne', 'ESL Pro League', 'Blast Premier', 'PGL Major Qual', 'DreamHack', 'StarLadder', 'Flashpoint', 'ELeague'];
+                const rndName = names[Math.floor(Math.random()*names.length)] + ' ' + (2020 + Math.floor(Math.random()*10));
+                
+                const slot = state.slots.find(s => s.id === id);
+                slot.status = 'planning';
+                slot.name = rndName;
+                slot.scores = { tac: 0, trn: 0, real: 0 };
+                
+                // Bonus from Team Chemistry
+                const bonusIdx = state.buffs.findIndex(b => b.effectType === 'next_plan_bonus');
+                if(bonusIdx >= 0) {
+                    const bonus = state.buffs[bonusIdx].val;
+                    slot.scores.tac = bonus; slot.scores.trn = bonus; slot.scores.real = bonus;
+                    state.buffs.splice(bonusIdx, 1);
+                    logic.log(`团队磨合生效: 新计划初始分 +${bonus}`, 'pos');
+                }
+
+                ui.render();
+            },
+
+            discardPlan: (id) => {
+                const slot = state.slots.find(s => s.id === id);
+                slot.status = 'empty';
+                ui.render();
+            },
+
+            signUp: (id, level) => {
+                const slot = state.slots.find(s => s.id === id);
+                if (slot.scores.tac === 0 || slot.scores.trn === 0 || slot.scores.real === 0) {
+                    ui.showModal('条件不足', '战术分、训练分、实战分必须都大于 0 才能报名。', [{text:'好的', cb:()=>ui.closeModal()}]);
+                    return;
+                }
+
+                slot.status = 'ongoing';
+                slot.level = level;
+                slot.monthsLeft = 4;
+                slot.savedScores = { ...slot.scores }; // Snapshot
+                logic.log(`报名成功: ${slot.name} (${level}级)`, 'pos');
+                ui.render();
+            }
+        };
+
+        // 启动
+        ui.init();
+    </script>
+</body>
+</html>
+    
