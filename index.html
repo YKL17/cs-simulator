@@ -339,6 +339,11 @@
         </div>
     </div>
 
+    <script type="module">
+        // Import and initialize Vercel Web Analytics
+        import { inject } from '@vercel/analytics';
+        inject();
+    </script>
     <script>
         // --- 核心配置与数据 ---
         const ROLES = [
