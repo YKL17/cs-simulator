@@ -3,8 +3,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSGO 模拟器 v2.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CSGO 模拟器 v2.1 Mobile</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -18,11 +18,11 @@
             --border: #e5e7eb;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; justify-content: center; align-items: center; }
 
         /* 通用样式 */
-        .btn { cursor: pointer; border: none; border-radius: 6px; padding: 8px 16px; font-weight: 600; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; }
+        .btn { cursor: pointer; border: none; border-radius: 6px; padding: 8px 16px; font-weight: 600; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.9rem; }
         .btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.1); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .btn:active:not(:disabled) { transform: translateY(0); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
@@ -35,20 +35,20 @@
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
         .btn-outline:hover { background: #f9fafb; }
 
-        .scroll-y { overflow-y: auto; scrollbar-width: thin; }
+        .scroll-y { overflow-y: auto; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
         .scroll-y::-webkit-scrollbar { width: 6px; }
         .scroll-y::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 3px; }
 
         /* 模态弹窗 */
-        #modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
-        .modal { background: white; width: 500px; max-width: 90%; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; overflow: hidden; max-height: 90vh; }
+        #modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(2px); padding: 20px; }
+        .modal { background: white; width: 500px; max-width: 100%; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; overflow: hidden; max-height: 90vh; }
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .modal-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
         .modal-title { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
         .modal-body { padding: 24px; overflow-y: auto; line-height: 1.6; font-size: 0.95rem; }
         .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: #f8fafc; }
 
-        /* 游戏界面布局 - 直接显示 */
+        /* 游戏界面布局 - 桌面端 */
         #game-container { width: 1400px; height: 90vh; display: grid; grid-template-columns: 300px 1fr 350px; grid-template-rows: 60px 1fr 200px; gap: 16px; }
         
         .panel { background: var(--panel-bg); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
@@ -140,6 +140,78 @@
 
         .tooltip { position: relative; }
         .tooltip:hover::after { content: attr(data-tip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; white-space: nowrap; z-index: 10; pointer-events: none; }
+
+        /* --- 移动端适配 (小于1200px视为移动/平板模式) --- */
+        @media (max-width: 1200px) {
+            body {
+                height: auto;
+                min-height: 100vh;
+                overflow-y: auto;
+                display: block;
+                padding: 10px;
+            }
+
+            #game-container {
+                width: 100%;
+                height: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .panel {
+                height: auto;
+                max-height: none;
+                flex: none; /* 防止被压缩 */
+            }
+
+            /* 重置Grid定位 */
+            .area-info, .area-stats, .area-results, .area-workstation, .area-logs, .area-actions {
+                grid-column: auto;
+                grid-row: auto;
+            }
+
+            /* 移动端逻辑顺序调整: 信息 -> 属性 -> 行动 -> 赛事 -> 结果 -> 日志 */
+            .area-info { order: 1; }
+            .area-stats { order: 2; }
+            .area-actions { order: 3; }
+            .area-workstation { order: 4; }
+            .area-results { order: 5; }
+            .area-logs { order: 6; }
+
+            /* 特定区域样式微调 */
+            .area-info {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+                padding: 15px;
+            }
+            
+            .area-results > div:nth-child(2) {
+                grid-template-columns: repeat(2, 1fr) !important; /* 战绩统计变2列 */
+            }
+
+            #history-list {
+                max-height: 300px; /* 限制列表高度 */
+            }
+
+            .area-workstation {
+                min-height: auto;
+            }
+            #slots-container {
+                max-height: 400px;
+            }
+
+            .area-logs {
+                height: 250px;
+            }
+
+            /* 模态框全屏化适配 */
+            .modal {
+                width: 100%;
+                max-height: 85vh;
+            }
+        }
     </style>
 </head>
 <body>
