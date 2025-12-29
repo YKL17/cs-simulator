@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSGO 模拟器 v1.8</title>
+    <title>CSGO 模拟器 v2.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -612,18 +612,28 @@
                 // 备战分通常在 0-20 之间，取平均值加入
                 const prepBonus = Math.round((finalScores.tac + finalScores.trn + finalScores.real) / 3);
                 
-                const selfBase = state.stats.aim + (state.stats.tactics * 0.5) + (state.stats.san * 0.2) + (prepBonus * 0.5) + (mods.self || 0);
-                const selfRand = Math.floor(Math.random() * 5) - 2; // 减少纯随机波动
+                // 增大随机范围：从 -2~2 增加到 -5~5，大幅提升不确定性
+                const selfRand = Math.floor(Math.random() * 11) - 5;
+                const teamRand = Math.floor(Math.random() * 11) - 5;
+                const oppRand  = Math.floor(Math.random() * 11) - 5;
+
+                // 增大备战影响系数：从 0.5 提升到 0.8
+                const prepCoef = 0.8;
+
+                const selfBase = state.stats.aim + (state.stats.tactics * 0.5) + (state.stats.san * 0.2) + (prepBonus * prepCoef) + (mods.self || 0);
                 const selfTotal = selfBase + selfRand;
                 const selfRes = selfTotal >= th.self ? 1 : (selfTotal >= th.self - 5 ? 0 : -1);
                 
-                const teamBase = state.stats.coach + state.stats.tactics + (prepBonus * 0.5) + (mods.team || 0);
-                const teamRand = Math.floor(Math.random() * 5) - 2;
+                const teamBase = state.stats.coach + state.stats.tactics + (prepBonus * prepCoef) + (mods.team || 0);
                 const teamTotal = teamBase + teamRand;
                 const teamRes = teamTotal >= th.team ? 1 : (teamTotal >= th.team - 5 ? 0 : -1);
 
+                // 平衡性调整：战术克制的计算
+                // 旧公式：(state.stats.tactics * 1.0) + (prepBonus * 0.3)
+                // 新公式：(state.stats.tactics * 1.5) + (prepBonus * 0.8)
+                // 这使得满属性（30+10=40）可以超过阈值 37.5
                 const oppDiff = th.opp * 1.5; 
-                const oppPerf = (state.stats.tactics * 1.0) + (prepBonus * 0.3) + (Math.floor(Math.random() * 5) - 2) + (mods.opp || 0);
+                const oppPerf = (state.stats.tactics * 1.5) + (prepBonus * prepCoef) + oppRand + (mods.opp || 0);
                 const oppRes = oppPerf >= oppDiff ? 1 : (oppPerf >= oppDiff - 5 ? 0 : -1);
 
                 const totalRes = selfRes + teamRes + oppRes;
@@ -689,7 +699,8 @@
                 const detailHtml = `
                     <div style="background:#f9fafb; padding:10px; border-radius:6px; margin-bottom:10px;">
                         <p><strong>最终战果: ${title}</strong></p>
-                        <p style="font-size:0.9rem; color:#6b7280;">表现: ${totalRes} | 备战分加成: +${Math.round(prepBonus * 0.5)}</p>
+                        <p style="font-size:0.9rem; color:#6b7280;">表现: ${totalRes} | 备战分加成: +${Math.round(prepBonus * prepCoef)}</p>
+                        <p style="font-size:0.9rem; color:#6b7280;">手感波动: ${selfRand > 0 ? '+'+selfRand : selfRand}</p>
                         <p style="font-size:0.8rem; color:#9ca3af;">(自${selfRes}/队${teamRes}/敌${oppRes})</p>
                     </div>
                     <p>奖励: 积分+${points}, 奖金+${Math.floor(money)}, 击杀+${kills}</p>
@@ -706,10 +717,17 @@
             triggerMajor: () => {
                 const isWinter = state.date.month === 12;
                 const thisYearHistory = state.history.filter(h => h.year === state.date.year);
-                const perfScore = thisYearHistory.reduce((acc, cur) => acc + (cur.result.includes('冠军') && cur.level === 'S' ? 5 : 0) + cur.points, 0);
+                
+                // 表现分：计算
+                const rawPerfScore = thisYearHistory.reduce((acc, cur) => acc + (cur.result.includes('冠军') && cur.level === 'S' ? 5 : 0) + cur.points, 0);
+                // 表现分：封顶 10
+                const perfScore = Math.min(rawPerfScore, 10);
                 
                 const power = (state.stats.aim * 2) + state.stats.tactics + state.stats.coach + (state.stats.san * 0.5) + perfScore;
-                const rand = Math.floor(Math.random() * 20) - 10;
+                
+                // 运气值：调整范围 -10 到 20
+                const rand = Math.floor(Math.random() * 31) - 10;
+                
                 const finalScore = power + rand;
 
                 let rank = '', rewardPoints = 0, rewardMoney = 0, rewardK = 0, rewardCoach = 0;
@@ -737,6 +755,7 @@
                     <p>你的队伍整装待发，经过残酷的角逐...</p>
                     <h2 style="text-align:center; color:var(--primary); margin: 20px 0;">${rank}</h2>
                     <p>实力评估: ${power.toFixed(1)} + 运气(${rand}) = ${finalScore.toFixed(1)}</p>
+                    <p style="font-size:0.8rem; color:#6b7280;">(基础实力 ${power - perfScore} + 年度表现修正 ${perfScore})</p>
                     <p>奖励: 积分+${rewardPoints}, 奖金+${rewardMoney}, 教练好感+${rewardCoach}</p>
                 `, [{text:'确定', class:'btn-primary', cb:()=>ui.closeModal()}]);
                 
@@ -895,8 +914,7 @@
                 ui.render();
             }
         };
-
-        const game = {
+           const game = {
             openShop: () => {
                 const itemsHtml = SHOP_ITEMS.map(item => {
                     const canAfford = state.stats.money >= item.cost;
