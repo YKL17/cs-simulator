@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       {
-        name: 'desktop-layout-and-extra-events',
+        name: 'desktop-layout-and-career-systems',
         transformIndexHtml() {
           return [
             {
@@ -55,9 +55,12 @@ export default defineConfig(({ mode }) => {
             },
             {
               tag: 'script',
-              attrs: {
-                src: './events-extra.js',
-              },
+              attrs: { src: './events-extra.js' },
+              injectTo: 'body',
+            },
+            {
+              tag: 'script',
+              attrs: { src: './team-system.js' },
               injectTo: 'body',
             },
           ];
