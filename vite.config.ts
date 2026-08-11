@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       {
-        name: 'desktop-layout-fix',
+        name: 'desktop-layout-and-extra-events',
         transformIndexHtml() {
           return [
             {
@@ -52,6 +52,13 @@ export default defineConfig(({ mode }) => {
                   }
                 }
               `,
+            },
+            {
+              tag: 'script',
+              attrs: {
+                src: './events-extra.js',
+              },
+              injectTo: 'body',
             },
           ];
         },
