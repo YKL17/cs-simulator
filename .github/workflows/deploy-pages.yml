@@ -38,6 +38,8 @@ jobs:
           node --check public/tournament-world.js
           node --check public/balance-ui-fix.js
           node --check public/career-flow-v2.js
+          node --check public/ranking-score-v2.js
+          node --check public/meta-system.js
 
       - name: Build
         run: npm run build
