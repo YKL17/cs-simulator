@@ -41,6 +41,7 @@ jobs:
           node --check public/career-flow-v2.js
           node --check public/ranking-score-v2.js
           node --check public/career-balance-v3.js
+          node --check public/shop-modal-fix.js
           node --check public/ranking-dedup-fix.js
           node --check public/meta-system.js
 
