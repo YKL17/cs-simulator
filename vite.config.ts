@@ -1,67 +1,70 @@
 import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 
-
 export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
-    return {
-      server: {
-        port: 3000,
-        host: '0.0.0.0',
-      },
-      plugins: [
-        {
-          name: 'desktop-layout-fix',
-          transformIndexHtml() {
-            return [
-              {
-                tag: 'style',
-                injectTo: 'head',
-                children: `
-                  /* Keep the action controls inside their panel on desktop. */
-                  .area-actions { min-height: 0; }
-                  .area-actions .action-grid {
-                    flex: 1;
-                    height: auto;
-                    min-height: 0;
-                    grid-template-rows: repeat(2, minmax(0, 1fr));
-                  }
-                  .area-actions .action-btn { min-height: 0; }
+  const env = loadEnv(mode, '.', '');
 
-                  /* Make the desktop layout more comfortable on shorter screens. */
-                  @media (min-width: 1201px) and (max-height: 750px) {
-                    #game-container {
-                      height: calc(100dvh - 24px);
-                      grid-template-rows: 52px minmax(0, 1fr) 176px;
-                      gap: 12px;
-                    }
-                    .area-actions .action-grid {
-                      gap: 8px;
-                      padding: 10px 12px;
-                    }
-                    .area-actions .action-btn {
-                      gap: 4px;
-                      font-size: 0.85rem;
-                    }
-                    .area-actions .action-btn i {
-                      font-size: 1.2rem;
-                      margin-bottom: 0;
-                    }
+  return {
+    // Use relative asset paths so the production build works under
+    // https://YKL17.github.io/csgo1/ as well as other static hosts.
+    base: './',
+    server: {
+      port: 3000,
+      host: '0.0.0.0',
+    },
+    plugins: [
+      {
+        name: 'desktop-layout-fix',
+        transformIndexHtml() {
+          return [
+            {
+              tag: 'style',
+              injectTo: 'head',
+              children: `
+                /* Keep the action controls inside their panel on desktop. */
+                .area-actions { min-height: 0; }
+                .area-actions .action-grid {
+                  flex: 1;
+                  height: auto;
+                  min-height: 0;
+                  grid-template-rows: repeat(2, minmax(0, 1fr));
+                }
+                .area-actions .action-btn { min-height: 0; }
+
+                /* Make the desktop layout more comfortable on shorter screens. */
+                @media (min-width: 1201px) and (max-height: 750px) {
+                  #game-container {
+                    height: calc(100dvh - 24px);
+                    grid-template-rows: 52px minmax(0, 1fr) 176px;
+                    gap: 12px;
                   }
-                `,
-              },
-            ];
-          },
+                  .area-actions .action-grid {
+                    gap: 8px;
+                    padding: 10px 12px;
+                  }
+                  .area-actions .action-btn {
+                    gap: 4px;
+                    font-size: 0.85rem;
+                  }
+                  .area-actions .action-btn i {
+                    font-size: 1.2rem;
+                    margin-bottom: 0;
+                  }
+                }
+              `,
+            },
+          ];
         },
-      ],
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
       },
-      resolve: {
-        alias: {
-          '@': path.resolve(__dirname, '.'),
-        }
-      }
-    };
+    ],
+    define: {
+      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+    },
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, '.'),
+      },
+    },
+  };
 });
