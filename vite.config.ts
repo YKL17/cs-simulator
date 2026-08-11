@@ -78,6 +78,16 @@ export default defineConfig(({ mode }) => {
               attrs: { src: './career-flow-v2.js' },
               injectTo: 'body',
             },
+            {
+              tag: 'script',
+              attrs: { src: './ranking-score-v2.js' },
+              injectTo: 'body',
+            },
+            {
+              tag: 'script',
+              attrs: { src: './meta-system.js' },
+              injectTo: 'body',
+            },
           ];
         },
       },
