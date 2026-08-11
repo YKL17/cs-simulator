@@ -1,15 +1,139 @@
+# CSGO Career Simulator
 
-## Run Locally
+一个以 **CSGO 职业选手生涯** 为主题的轻量级网页模拟游戏。
 
-**Prerequisites:**  Node.js
+你将从新人阶段开始，在有限的心态、金币和时间里安排训练、打工、赛事备战与职业选择，逐步提升枪法、战术意识和教练好感度，参加不同级别赛事、Major 与年度 Top 20 评选，并尝试完成一段属于自己的职业生涯。
 
+> 当前版本为纯前端网页游戏，可直接在线游玩，无需注册账号。
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 🎮 在线试玩
 
-## Run online
+**Live Demo:** https://csgo1-kappa.vercel.app
 
-csgo1-kappa.vercel.app
+## ✨ 游戏内容
+
+- **多种初始出身**：普通人、天才枪男、战术大师、富可敌国、教练宠儿、天选之人
+- **属性成长系统**：心态、枪法、战术意识、教练好感度、金币
+- **月度行动选择**：看 Demo、打工、想战术、打训练赛、打天梯
+- **赛事备战系统**：通过战术、训练和实战分数准备比赛
+- **多级赛事**：C / B / A / S 级赛事，不同级别拥有不同难度和奖励
+- **Major 系统**：每年参与 Major，根据实力、年度表现与随机波动决定成绩
+- **HLTV Top 20 模拟**：年度表现会影响最终排名
+- **随机事件与选择事件**：职业生涯中会遇到不同机会和意外
+- **商店与 Buff**：购买一次性或永久升级，为训练和比赛提供加成
+- **职业晋升与多种结局**：从新人走向职业选手，也可能因为心态、经济或表现问题提前退役
+- **响应式界面**：支持桌面、平板和手机浏览器
+
+## 🕹️ 基本玩法
+
+每个月你可以选择一次主要行动：
+
+| 行动 | 主要效果 |
+| --- | --- |
+| 看 Demo | 消耗少量心态，提高战术意识 |
+| 打工 | 消耗心态，获得金币 |
+| 想战术 | 提高正在备战赛事的战术分 |
+| 打训练赛 | 提高赛事训练分 |
+| 打天梯 | 提高赛事实战分 |
+| 进入下个月 | 结算工资、开销、恢复、赛事进度与随机事件 |
+
+你需要在 **成长、心态、金币和比赛准备** 之间做取舍。
+
+### 新人阶段
+
+尽快积累职业积分并证明自己。表现达到条件后，会获得晋升职业阶段的机会。
+
+### 职业阶段
+
+参加更高级别赛事与 Major，争取冠军、年度 Top 20 与最终的成功退役结局。
+
+## 🧠 比赛机制
+
+赛事结果不仅取决于基础属性，还会受到以下因素影响：
+
+- 枪法
+- 战术意识
+- 教练好感度
+- 心态
+- 备战分数
+- 比赛中的关键选择
+- 随机状态波动
+
+因此即使属性较高，也不保证每场比赛都能夺冠。
+
+## 🛠️ 技术栈
+
+- HTML / CSS / JavaScript
+- Vite
+- TypeScript tooling
+- Font Awesome
+- Vercel Analytics
+- Vercel deployment
+
+目前核心游戏逻辑集中在 `index.html` 中，项目不依赖后端数据库。
+
+## 🚀 本地运行
+
+### Prerequisites
+
+- Node.js 18+（推荐使用较新的 LTS 版本）
+- npm
+
+### Installation
+
+```bash
+git clone https://github.com/YKL17/csgo1.git
+cd csgo1
+npm install
+npm run dev
+```
+
+然后在浏览器打开 Vite 输出的本地地址。项目默认开发端口为：
+
+```text
+http://localhost:3000
+```
+
+当前游戏逻辑不需要 API Key 即可运行。
+
+## 📦 Build
+
+```bash
+npm run build
+```
+
+预览生产构建：
+
+```bash
+npm run preview
+```
+
+## 📁 项目结构
+
+```text
+csgo1/
+├── index.html          # UI、样式与核心游戏逻辑
+├── package.json        # npm scripts 与依赖
+├── vite.config.ts      # Vite 配置
+├── tsconfig.json       # TypeScript 配置
+└── README.md
+```
+
+## 🗺️ 后续计划
+
+这个项目仍在持续调整中。未来可以继续加入：
+
+- 更多随机事件与赛事事件
+- 更丰富的战队 / 转会系统
+- 成就与生涯记录
+- 存档 / 读档功能
+- 更完整的移动端与不同屏幕尺寸适配
+- 更细致的赛事平衡与职业成长路线
+
+## 🤝 Feedback
+
+如果你发现 Bug、平衡性问题，或者有新的玩法建议，欢迎通过 GitHub Issues 提出。
+
+## 📄 License
+
+目前仓库尚未添加开源许可证。如需复用或分发代码，请先联系项目作者。
