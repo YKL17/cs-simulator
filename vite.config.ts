@@ -5,8 +5,6 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
 
   return {
-    // Use relative asset paths so the production build works under
-    // https://YKL17.github.io/csgo1/ as well as other static hosts.
     base: './',
     server: {
       port: 3000,
@@ -21,7 +19,6 @@ export default defineConfig(({ mode }) => {
               tag: 'style',
               injectTo: 'head',
               children: `
-                /* Keep the action controls inside their panel on desktop. */
                 .area-actions { min-height: 0; }
                 .area-actions .action-grid {
                   flex: 1;
@@ -30,26 +27,15 @@ export default defineConfig(({ mode }) => {
                   grid-template-rows: repeat(2, minmax(0, 1fr));
                 }
                 .area-actions .action-btn { min-height: 0; }
-
-                /* Make the desktop layout more comfortable on shorter screens. */
                 @media (min-width: 1201px) and (max-height: 750px) {
                   #game-container {
                     height: calc(100dvh - 24px);
                     grid-template-rows: 52px minmax(0, 1fr) 176px;
                     gap: 12px;
                   }
-                  .area-actions .action-grid {
-                    gap: 8px;
-                    padding: 10px 12px;
-                  }
-                  .area-actions .action-btn {
-                    gap: 4px;
-                    font-size: 0.85rem;
-                  }
-                  .area-actions .action-btn i {
-                    font-size: 1.2rem;
-                    margin-bottom: 0;
-                  }
+                  .area-actions .action-grid { gap: 8px; padding: 10px 12px; }
+                  .area-actions .action-btn { gap: 4px; font-size: 0.85rem; }
+                  .area-actions .action-btn i { font-size: 1.2rem; margin-bottom: 0; }
                 }
               `,
             },
@@ -63,6 +49,7 @@ export default defineConfig(({ mode }) => {
             { tag: 'script', attrs: { src: './career-balance-v3.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './shop-modal-fix.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './ranking-dedup-fix.js' }, injectTo: 'body' },
+            { tag: 'script', attrs: { src: './event-system-v4.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './meta-system.js' }, injectTo: 'body' },
           ];
         },
