@@ -36,6 +36,7 @@ jobs:
           node --check public/events-extra.js
           node --check public/team-system.js
           node --check public/tournament-world.js
+          node --check public/balance-ui-fix.js
 
       - name: Build
         run: npm run build
