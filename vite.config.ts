@@ -61,6 +61,7 @@ export default defineConfig(({ mode }) => {
             { tag: 'script', attrs: { src: './career-flow-v2.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './ranking-score-v2.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './career-balance-v3.js' }, injectTo: 'body' },
+            { tag: 'script', attrs: { src: './shop-modal-fix.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './ranking-dedup-fix.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './meta-system.js' }, injectTo: 'body' },
           ];
