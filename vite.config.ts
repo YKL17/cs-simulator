@@ -73,6 +73,11 @@ export default defineConfig(({ mode }) => {
               attrs: { src: './balance-ui-fix.js' },
               injectTo: 'body',
             },
+            {
+              tag: 'script',
+              attrs: { src: './career-flow-v2.js' },
+              injectTo: 'body',
+            },
           ];
         },
       },
