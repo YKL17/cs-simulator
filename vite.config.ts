@@ -68,6 +68,11 @@ export default defineConfig(({ mode }) => {
               attrs: { src: './tournament-world.js' },
               injectTo: 'body',
             },
+            {
+              tag: 'script',
+              attrs: { src: './balance-ui-fix.js' },
+              injectTo: 'body',
+            },
           ];
         },
       },
