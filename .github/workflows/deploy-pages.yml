@@ -35,10 +35,12 @@ jobs:
         run: |
           node --check public/events-extra.js
           node --check public/team-system.js
+          node --check public/team-cap-32.js
           node --check public/tournament-world.js
           node --check public/balance-ui-fix.js
           node --check public/career-flow-v2.js
           node --check public/ranking-score-v2.js
+          node --check public/career-balance-v3.js
           node --check public/meta-system.js
 
       - name: Build
