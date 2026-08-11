@@ -8,7 +8,7 @@
 
 ## 🎮 在线试玩
 
-**Live Demo:** https://csgo1-kappa.vercel.app
+**Live Demo:** https://ykl17.github.io/csgo1/
 
 ## ✨ 游戏内容
 
@@ -68,7 +68,7 @@
 - TypeScript tooling
 - Font Awesome
 - Vercel Analytics
-- Vercel deployment
+- GitHub Pages deployment
 
 目前核心游戏逻辑集中在 `index.html` 中，项目不依赖后端数据库。
 
@@ -112,6 +112,7 @@ npm run preview
 
 ```text
 csgo1/
+├── .github/workflows/ # GitHub Pages 自动部署
 ├── index.html          # UI、样式与核心游戏逻辑
 ├── package.json        # npm scripts 与依赖
 ├── vite.config.ts      # Vite 配置
