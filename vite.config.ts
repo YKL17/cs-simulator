@@ -63,6 +63,11 @@ export default defineConfig(({ mode }) => {
               attrs: { src: './team-system.js' },
               injectTo: 'body',
             },
+            {
+              tag: 'script',
+              attrs: { src: './tournament-world.js' },
+              injectTo: 'body',
+            },
           ];
         },
       },
