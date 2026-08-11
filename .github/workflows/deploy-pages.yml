@@ -31,6 +31,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate career system scripts
+        run: |
+          node --check public/events-extra.js
+          node --check public/team-system.js
+          node --check public/tournament-world.js
+
       - name: Build
         run: npm run build
 
