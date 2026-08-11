@@ -38,11 +38,21 @@
     return null;
   }
 
+  function placementFloor(bucket, weight) {
+    if (bucket.label === '冠军') return Math.max(4, Math.round(weight * 0.55));
+    if (bucket.label === '亚军') return Math.max(2, Math.round(weight * 0.28));
+    // A semifinal appearance can never cost ranking points, but does not get
+    // free points unless the team actually outperformed its seed.
+    if (bucket.label === '四强') return 0;
+    return null;
+  }
+
   function expectedDelta(event, seed, result, total) {
     if (!seed) return 0;
     const bucket = resultBucket(result, total);
     if (!bucket) return 0;
     const weight = LEVEL_WEIGHT[event?.level] || 10;
+    const floor = placementFloor(bucket, weight);
 
     // Missing the group/playoff cut always costs points. A high seed is punished more.
     if (bucket.groupExit) {
@@ -51,17 +61,21 @@
     }
 
     // Seed falls inside the finishing bucket: performance matched expectation.
-    if (seed >= bucket.min && seed <= bucket.max) return 0;
+    // Champion and runner-up still receive their placement floor.
+    if (seed >= bucket.min && seed <= bucket.max) return floor ?? 0;
 
-    // Outperformed the pre-event seed.
+    // Outperformed the pre-event seed. Keep any placement floor, then add more
+    // when the finishing bucket is better than the team's seed suggested.
     if (seed > bucket.max) {
       const distance = seed - bucket.max;
       const scale = Math.max(3, Math.ceil(total / 6));
-      return Math.max(2, Math.round(weight * clamp(distance / scale, 0.18, 1)));
+      const expectationBonus = Math.max(2, Math.round(weight * clamp(distance / scale, 0.18, 1)));
+      return Math.max(floor ?? 0, expectationBonus);
     }
 
-    // Underperformed. Top-four finishes are protected from negative points.
-    if (bucket.top4) return 0;
+    // Underperformed. Top-four finishes are protected: champion/runner keep a
+    // positive floor, semifinal is at least zero. Lower finishes can lose points.
+    if (bucket.top4) return floor ?? 0;
     const distance = bucket.min - seed;
     const scale = Math.max(3, Math.ceil(total / 6));
     return -Math.max(2, Math.round(weight * clamp(distance / scale, 0.18, 1)));
