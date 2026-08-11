@@ -26,8 +26,12 @@
     if (text.includes('冠军')) return { min: 1, max: 1, label: '冠军', top4: true, groupExit: false };
     if (text.includes('亚军') || text.includes('决赛')) return { min: 2, max: 2, label: '亚军', top4: true, groupExit: false };
     if (text.includes('四强') || text.includes('半决赛')) return { min: 3, max: 4, label: '四强', top4: true, groupExit: false };
-    if (text.includes('八强')) return { min: 5, max: 8, label: '八强', top4: false, groupExit: false };
-    if (text.includes('16强') || text.includes('十六强') || text.includes('晋级')) return { min: 9, max: Math.min(16, total), label: '16强', top4: false, groupExit: false };
+    if (text.includes('八强')) return { min: 5, max: Math.min(8, total), label: '八强', top4: false, groupExit: false };
+    if (text.includes('16强') || text.includes('十六强') || text.includes('晋级')) {
+      // In 12/16-team invitation events, a 16强 label means the team failed to reach the playoff cut.
+      if (total <= 16) return { min: Math.min(9, total), max: total, label: '小组未出线', top4: false, groupExit: true };
+      return { min: 9, max: Math.min(16, total), label: '16强', top4: false, groupExit: false };
+    }
     if (text.includes('小组') || text.includes('首轮') || text.includes('预选出局') || text.includes('出局')) {
       return { min: Math.min(17, total), max: total, label: '小组未出线', top4: false, groupExit: true };
     }
@@ -102,6 +106,7 @@
   // Replace the legacy fixed reward for the player's completed event with relative performance scoring.
   const previousFinalize = logic.finalizeMatch.bind(logic);
   logic.finalizeMatch = (slot, mods = { self: 0, team: 0, opp: 0 }) => {
+    normalizeInitialSpacing();
     const event = world.currentEvent ? { ...world.currentEvent } : null;
     const rows = tournamentWorld.getRankings();
     const teamId = state.teamSystem?.currentTeamId;
@@ -166,6 +171,13 @@
     const result = previousInit(roleId);
     normalizeInitialSpacing();
     return result;
+  };
+
+  // Career route selection initializes the world asynchronously, so normalize on the first real render too.
+  const previousRender = ui.render.bind(ui);
+  ui.render = () => {
+    if (state.started && world.initialized) normalizeInitialSpacing();
+    return previousRender();
   };
 
   window.rankingScoreV2 = {
