@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "cs-career-simulator",
+  "name": "cs-simulator",
   "compatibility_date": "2026-08-11",
   "assets": {
     "directory": "./dist",
