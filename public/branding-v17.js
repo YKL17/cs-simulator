@@ -4,7 +4,7 @@
     return;
   }
 
-  const GAME_VERSION = '2.17';
+  const GAME_VERSION = '2.18';
   const GAME_NAME = 'CS Career Simulator';
   const GITHUB_URL = 'https://github.com/YKL17/cs-simulator';
   const PAGES_URL = 'https://ykl17.github.io/cs-simulator/';
@@ -105,8 +105,6 @@
     };
   }
 
-  // meta-system installs ui.init as a closure around its original showHome().
-  // Wrap ui.init too so the very first launch receives the v2.17 branding.
   const previousInit = ui.init.bind(ui);
   ui.init = (...args) => {
     const out = previousInit(...args);
