@@ -5,26 +5,12 @@
   }
 
   state.flags = state.flags || {};
-  state.flags.retirementDecisionYears = Array.isArray(state.flags.retirementDecisionYears)
-    ? state.flags.retirementDecisionYears
-    : [];
-
   const currentYear = () => Number(state.date?.year || 1);
+  const currentMonth = () => Number(state.date?.month || 1);
 
   function annualDone(year = currentYear()) {
     return Array.isArray(state.hltvHistory)
       && state.hltvHistory.some((row) => Number(row?.year) === Number(year));
-  }
-
-  function handled(year = currentYear()) {
-    return state.flags.retirementDecisionYears.includes(Number(year));
-  }
-
-  function markHandled(year = currentYear()) {
-    const y = Number(year);
-    if (!state.flags.retirementDecisionYears.includes(y)) {
-      state.flags.retirementDecisionYears.push(y);
-    }
   }
 
   function careerAverageRating() {
@@ -63,9 +49,10 @@
     const team = window.teamSystem?.getTeam?.();
     const forced = state.flags.retirementType === 'ten-year-limit';
     const year = Number(state.flags.retirementYear || currentYear());
+    const month = Number(state.flags.retirementMonth || currentMonth());
     const reason = forced
       ? '你完成了完整的10年职业生涯。按照职业生涯模式规则，现在正式退役。'
-      : `你在第${year}年结束后选择主动结束职业生涯。`;
+      : `你在第${year}年${month}月主动宣布结束职业生涯。`;
 
     ui.showModal('光荣退役', `
       <p style="margin-bottom:12px">${reason}</p>
@@ -81,19 +68,18 @@
     [{ text: '重新开始', class: 'btn-danger', cb: () => location.reload() }]);
   }
 
-  function retire({ forced = false, year = currentYear() } = {}) {
+  function retire({ forced = false, year = currentYear(), month = currentMonth() } = {}) {
     if (state.flags.retired) {
       showRetirementSummary();
       return;
     }
-    markHandled(year);
     state.flags.retired = true;
     state.flags.retirementYear = Number(year);
+    state.flags.retirementMonth = Number(month);
     state.flags.retirementType = forced ? 'ten-year-limit' : 'voluntary';
-    state.flags.retirementPromptOpenYear = null;
     logic.log(forced
       ? `第${year}年结束：达到10年职业生涯上限，正式退役。`
-      : `第${year}年结束：你宣布退役。`, 'pos');
+      : `第${year}年${month}月：你主动宣布退役。`, 'pos');
     ui.closeModal();
     setTimeout(() => {
       disableCareerActions();
@@ -101,63 +87,38 @@
     }, 80);
   }
 
-  function continueCareer(year = currentYear()) {
-    markHandled(year);
-    state.flags.retirementPromptOpenYear = null;
-    logic.log(`第${year}年结束：选择继续职业生涯。`, 'pos');
-    ui.closeModal();
-    ui.render();
-  }
-
+  // Compatibility hook. Years 1-9 no longer show a retirement prompt. Retirement
+  // is a deliberate action in Settings. Year 10 remains the mandatory cap.
   function showRetirementDecision(year = currentYear()) {
     const y = Number(year);
-    if (state.flags.retired || handled(y) || !annualDone(y)) return;
-
-    // The tenth season is the hard cap. There is intentionally no continue button.
-    if (y >= 10) {
-      retire({ forced: true, year: y });
-      return;
-    }
-
-    if (state.flags.retirementPromptOpenYear === y && ui.isModalOpen) return;
-    state.flags.retirementPromptOpenYear = y;
-    const team = window.teamSystem?.getTeam?.();
-    ui.showModal(`第${y}年 · 生涯决定`, `
-      <p><strong>${team?.name || '当前战队'}</strong> 的这个赛季已经结束。</p>
-      <p style="margin-top:8px">你要继续职业生涯，还是现在宣布退役？</p>
-      <p style="font-size:.78rem;color:#64748b;margin-top:8px">每年年末都可以选择退役；如果一直继续，第10年结束后会强制退役。</p>`, [
-      { text: '继续征战', class: 'btn-primary', cb: () => continueCareer(y) },
-      { text: '宣布退役', class: 'btn-warning', cb: () => retire({ forced: false, year: y }) },
-    ]);
+    if (state.flags.retired || !annualDone(y)) return;
+    if (y >= 10) retire({ forced: true, year: y, month: 12 });
   }
 
-  function afterAnnualAward(year) {
-    if (!annualDone(year) || handled(year) || state.flags.retired) return;
-    setTimeout(() => showRetirementDecision(year), 100);
-  }
-
-  // Annual Rating V10 ultimately displays this modal after the December Major.
-  // Wrap its confirmation button so the retirement decision follows the award,
-  // never before the Winter Major or annual Top20 result.
+  // After the year-10 Top20 result is acknowledged, finish the career. Earlier
+  // seasons are uninterrupted and never show an annual retirement popup.
   const previousShowModal = ui.showModal.bind(ui);
   ui.showModal = (title, html, buttons = []) => {
     const isAnnual = String(title || '').includes('HLTV 年度 Top 20');
-    if (!isAnnual) return previousShowModal(title, html, buttons);
+    if (!isAnnual || currentYear() < 10) return previousShowModal(title, html, buttons);
 
     const year = currentYear();
     const wrappedButtons = (buttons || []).map((button) => ({
       ...button,
       cb: () => {
         const out = button.cb?.();
-        afterAnnualAward(year);
+        setTimeout(() => {
+          if (!state.flags.retired && annualDone(year)) retire({ forced: true, year, month: 12 });
+        }, 90);
         return out;
       },
     }));
     return previousShowModal(title, html, wrappedButtons);
   };
 
-  // Closing the annual modal with the X must not let the player bypass the
-  // yearly choice. The next-month button is a hard gate until a decision exists.
+  // If the player closes the year-10 Top20 modal with X, entering another month
+  // is still blocked by mandatory retirement. The original >120-month core check
+  // is also left intact as a second safety net.
   const previousGameNextMonth = game.nextMonth.bind(game);
   game.nextMonth = () => {
     if (state.flags.retired) {
@@ -165,8 +126,8 @@
       return;
     }
     const year = currentYear();
-    if (state.date.month === 12 && annualDone(year) && !handled(year)) {
-      showRetirementDecision(year);
+    if (year >= 10 && state.date.month === 12 && annualDone(year)) {
+      retire({ forced: true, year, month: 12 });
       return;
     }
     return previousGameNextMonth();
@@ -179,9 +140,6 @@
     return out;
   };
 
-  // Keep the original core 120-month/10-year ending check untouched as a
-  // second safety net. V15 only adds the annual voluntary choice and makes the
-  // tenth year explicitly mandatory after the annual awards.
   disableCareerActions();
   window.retirementChoiceV15 = {
     showRetirementDecision,
@@ -189,5 +147,5 @@
     showRetirementSummary,
     annualDone,
   };
-  console.info('[retirement-choice-v15] Annual retirement choice loaded; year 10 remains a mandatory retirement cap.');
+  console.info('[retirement-choice-v15] Voluntary retirement moved to Settings; year 10 remains mandatory.');
 })();
