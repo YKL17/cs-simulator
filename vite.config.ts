@@ -62,6 +62,7 @@ export default defineConfig(({ mode }) => {
             { tag: 'script', attrs: { src: './career-expansion-v14.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './retirement-choice-v15.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './settings-system-v17.js' }, injectTo: 'body' },
+            { tag: 'script', attrs: { src: './branding-v17.js' }, injectTo: 'body' },
           ];
         },
       },
