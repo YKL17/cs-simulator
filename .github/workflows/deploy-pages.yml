@@ -50,6 +50,7 @@ jobs:
           node --check public/meta-system.js
           node --check public/prep-name-fix-v9.js
           node --check public/annual-rating-v10.js
+          node --check public/single-event-result-v11.js
 
       - name: Build
         run: npm run build
