@@ -54,6 +54,7 @@ jobs:
           node --check public/prep-state-fix-v12.js
           node --check public/economy-prep-v13.js
           node --check public/career-expansion-v14.js
+          node --check public/retirement-choice-v15.js
 
       - name: Build
         run: npm run build
