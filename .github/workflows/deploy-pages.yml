@@ -57,6 +57,7 @@ jobs:
           node --check public/retirement-choice-v15.js
           node --check public/settings-system-v17.js
           node --check public/branding-v17.js
+          node --check public/ranking-progression-v18.js
 
       - name: Build
         run: npm run build
