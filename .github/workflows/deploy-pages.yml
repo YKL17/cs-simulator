@@ -58,6 +58,7 @@ jobs:
           node --check public/settings-system-v17.js
           node --check public/branding-v17.js
           node --check public/ranking-progression-v18.js
+          node --check public/ranking-season-decay-v19.js
 
       - name: Build
         run: npm run build
