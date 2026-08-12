@@ -56,6 +56,7 @@ export default defineConfig(({ mode }) => {
             { tag: 'script', attrs: { src: './meta-system.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './prep-name-fix-v9.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './annual-rating-v10.js' }, injectTo: 'body' },
+            { tag: 'script', attrs: { src: './single-event-result-v11.js' }, injectTo: 'body' },
           ];
         },
       },
