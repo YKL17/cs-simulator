@@ -56,6 +56,7 @@ jobs:
           node --check public/career-expansion-v14.js
           node --check public/retirement-choice-v15.js
           node --check public/settings-system-v17.js
+          node --check public/branding-v17.js
 
       - name: Build
         run: npm run build
