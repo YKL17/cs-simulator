@@ -60,6 +60,7 @@ export default defineConfig(({ mode }) => {
             { tag: 'script', attrs: { src: './prep-state-fix-v12.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './economy-prep-v13.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './career-expansion-v14.js' }, injectTo: 'body' },
+            { tag: 'script', attrs: { src: './retirement-choice-v15.js' }, injectTo: 'body' },
           ];
         },
       },
