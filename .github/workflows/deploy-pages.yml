@@ -45,6 +45,7 @@ jobs:
           node --check public/ranking-dedup-fix.js
           node --check public/event-system-v4.js
           node --check public/competition-calibration-v6.js
+          node --check public/major-month-fix-v7.js
           node --check public/meta-system.js
 
       - name: Build
