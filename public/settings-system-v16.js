@@ -96,7 +96,7 @@
           <span><strong>${retired ? '查看退役总结' : '宣布退役'}</strong><small>${retired ? '查看这段职业生涯的最终成绩' : '主动结束当前职业生涯'}</small></span><i class="fa-solid fa-person-walking-arrow-right"></i>
         </button>
       </div>
-      <p style="font-size:.75rem;color:#94a3b8;margin-top:10px">第1–9年不会再自动询问退役；第10年结束后仍会强制退役。</p>`,
+      <p style="font-size:.75rem;color:#94a3b8;margin-top:10px">第1–9年不会自动询问退役；第10年结束后仍会强制退役。</p>`,
     [{ text: '关闭', class: 'btn-outline', cb: () => ui.closeModal() }]);
   }
 
@@ -105,25 +105,36 @@
     if (oldSave) oldSave.remove();
 
     let button = document.getElementById('btn-settings-game');
-    if (button) {
-      button.onclick = openSettings;
-      button.style.display = '';
-      return;
+    if (!button) {
+      button = document.createElement('button');
+      button.id = 'btn-settings-game';
+      button.type = 'button';
+      button.className = 'btn btn-outline';
+      button.innerHTML = '<i class="fa-solid fa-gear"></i><span>设置</span>';
+      button.title = '设置 / 存档 / 载入 / 退役';
+      document.body.appendChild(button);
     }
 
-    const anchor = document.getElementById('btn-team-hub')
-      || document.getElementById('btn-home-game')
-      || document.querySelector('.area-stats button');
-    const parent = anchor?.parentElement || document.querySelector('.area-stats');
-    if (!parent) return;
-
-    button = document.createElement('button');
-    button.id = 'btn-settings-game';
-    button.className = 'btn btn-outline';
-    button.style.flex = '1';
-    button.innerHTML = '<i class="fa-solid fa-gear"></i> 设置';
+    // Keep Settings independent of the stats-row layout. Earlier versions
+    // appended it beside Team/Honors where narrow layouts could clip it.
+    if (button.parentElement !== document.body) document.body.appendChild(button);
     button.onclick = openSettings;
-    parent.appendChild(button);
+    button.style.cssText = [
+      'position:fixed',
+      'top:14px',
+      'right:14px',
+      'z-index:1800',
+      'display:flex',
+      'align-items:center',
+      'gap:6px',
+      'padding:8px 12px',
+      'background:rgba(255,255,255,.96)',
+      'box-shadow:0 5px 18px rgba(15,23,42,.18)',
+      'border:1px solid #cbd5e1',
+      'border-radius:9px',
+      'font-weight:700'
+    ].join(';');
+    button.style.visibility = state.started ? 'visible' : 'hidden';
   }
 
   const previousRender = ui.render.bind(ui);
@@ -142,5 +153,5 @@
     confirmRetirement,
     ensureSettingsButton,
   };
-  console.info('[settings-system-v16] In-game Settings now owns save, load and voluntary retirement.');
+  console.info('[settings-system-v16] Settings is pinned to the game top-right and owns save/load/voluntary retirement.');
 })();
