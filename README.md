@@ -10,6 +10,7 @@
 ## 🎮 在线游玩
 
 **Live Demo:** https://ykl17.github.io/cs-simulator/
+or https://cs-simulator.ykl17.workers.dev/
 
 **Repository:** https://github.com/YKL17/cs-simulator
 
