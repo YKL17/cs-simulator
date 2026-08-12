@@ -51,6 +51,7 @@ export default defineConfig(({ mode }) => {
             { tag: 'script', attrs: { src: './ranking-dedup-fix.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './event-system-v4.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './competition-calibration-v6.js' }, injectTo: 'body' },
+            { tag: 'script', attrs: { src: './major-month-fix-v7.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './meta-system.js' }, injectTo: 'body' },
           ];
         },
