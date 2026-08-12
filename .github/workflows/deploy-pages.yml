@@ -46,6 +46,7 @@ jobs:
           node --check public/event-system-v4.js
           node --check public/competition-calibration-v6.js
           node --check public/major-month-fix-v7.js
+          node --check public/team-chemistry-prep-v8.js
           node --check public/meta-system.js
 
       - name: Build
