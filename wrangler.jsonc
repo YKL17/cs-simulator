@@ -1,4 +1,5 @@
 {
+  // Cloudflare Workers build configuration
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "cs-simulator",
   "compatibility_date": "2026-08-11",
