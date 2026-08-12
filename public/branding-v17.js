@@ -64,6 +64,15 @@
     });
   }
 
+  function patchHomeButton() {
+    const button = document.getElementById('btn-home-game');
+    if (!button) return;
+    button.onclick = () => {
+      metaSystem.autoSave?.();
+      metaSystem.showHome?.();
+    };
+  }
+
   if (!document.getElementById('branding-v17-style')) {
     const style = document.createElement('style');
     style.id = 'branding-v17-style';
@@ -96,6 +105,16 @@
     };
   }
 
+  // meta-system installs ui.init as a closure around its original showHome().
+  // Wrap ui.init too so the very first launch receives the v2.17 branding.
+  const previousInit = ui.init.bind(ui);
+  ui.init = (...args) => {
+    const out = previousInit(...args);
+    patchHome();
+    patchVisibleBranding(document.getElementById('career-home'));
+    return out;
+  };
+
   const previousShowModal = ui.showModal.bind(ui);
   ui.showModal = (title, html, buttons = []) => previousShowModal(
     replaceBranding(title),
@@ -107,12 +126,14 @@
   ui.render = () => {
     const out = previousRender();
     patchVisibleBranding(document.getElementById('game-container'));
+    patchHomeButton();
     patchHome();
     return out;
   };
 
   patchHome();
   patchVisibleBranding();
+  patchHomeButton();
 
   window.csSimulatorBrand = {
     version: GAME_VERSION,
