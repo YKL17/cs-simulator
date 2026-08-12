@@ -1,7 +1,7 @@
 {
-  "name": "csgo",
+  "name": "cs-simulator",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.17.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,7 +13,6 @@
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
-    
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }
