@@ -67,6 +67,9 @@ jobs:
           node --check public/i18n-v20-supplement.js
           node --check public/i18n-v20-coverage.js
           node --check public/i18n-v20-unified.js
+          node --check public/i18n-v20-late-content.js
+          node --check public/i18n-v20-audit-extra.js
+          node --check public/i18n-v20-runtime-v2.js
 
       - name: Build
         run: npm run build
