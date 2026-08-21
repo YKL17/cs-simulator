@@ -4,7 +4,7 @@
     return;
   }
 
-  const GAME_VERSION = '2.19';
+  const GAME_VERSION = '2.20';
   const GAME_NAME = 'CS Career Simulator';
   const GITHUB_URL = 'https://github.com/YKL17/cs-simulator';
   const PAGES_URL = 'https://ykl17.github.io/cs-simulator/';
