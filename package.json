@@ -1,7 +1,7 @@
 {
   "name": "cs-simulator",
   "private": true,
-  "version": "2.17.0",
+  "version": "2.20.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
