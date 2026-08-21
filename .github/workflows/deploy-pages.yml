@@ -66,6 +66,7 @@ jobs:
           node --check public/i18n-v20.js
           node --check public/i18n-v20-supplement.js
           node --check public/i18n-v20-coverage.js
+          node --check public/i18n-v20-unified.js
 
       - name: Build
         run: npm run build
