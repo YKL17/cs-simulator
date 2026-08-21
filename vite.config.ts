@@ -65,6 +65,7 @@ export default defineConfig(({ mode }) => {
             { tag: 'script', attrs: { src: './branding-v17.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './ranking-progression-v18.js' }, injectTo: 'body' },
             { tag: 'script', attrs: { src: './ranking-season-decay-v19.js' }, injectTo: 'body' },
+            { tag: 'script', attrs: { src: './i18n-v20.js' }, injectTo: 'body' },
           ];
         },
       },
