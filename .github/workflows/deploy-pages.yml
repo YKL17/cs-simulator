@@ -62,8 +62,10 @@ jobs:
           node --check public/branding-v17.js
           node --check public/ranking-progression-v18.js
           node --check public/ranking-season-decay-v19.js
+          node --check public/ui-layout-v20-fix.js
           node --check public/i18n-v20.js
           node --check public/i18n-v20-supplement.js
+          node --check public/i18n-v20-coverage.js
 
       - name: Build
         run: npm run build
